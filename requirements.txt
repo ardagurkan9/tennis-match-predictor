@@ -1,4 +1,8 @@
 pandas
 numpy
+scikit-learn
+matplotlib
+joblib
+pyarrow
 notebook
 ipykernel
