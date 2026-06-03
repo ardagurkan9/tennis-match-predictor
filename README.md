@@ -385,3 +385,14 @@ Planned improvements:
 * Command-line prediction interface
 * FastAPI prediction endpoint
 
+## Project Progress
+
+- [x] Data Ingestion
+- [x] Data Cleaning
+- [x] Feature Engineering
+- [ ] Data Leakage Prevention Review
+- [ ] Train / Validation / Test Split
+- [ ] Baseline Model
+- [ ] Model Training
+- [ ] Evaluation
+- [ ] Prediction
