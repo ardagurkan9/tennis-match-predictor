@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 
 
@@ -79,3 +81,14 @@ def create_player_opponent_rows(matches: pd.DataFrame) -> pd.DataFrame:
     )
 
     return pd.concat([winner_rows, loser_rows], ignore_index=True)
+
+
+def save_match_features(
+    match_features: pd.DataFrame,
+    output_path: str | Path = "data/features/match_features.parquet",
+) -> Path:
+    """Save match feature data to a parquet file."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    match_features.to_parquet(output_path, index=False)
+    return output_path

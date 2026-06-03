@@ -17,6 +17,7 @@ data/processed/*
 !data/processed/cleaned_matches.parquet
 data/features/*
 !data/features/.gitkeep
+!data/features/match_features.parquet
 data/predictions/*
 !data/predictions/.gitkeep
 models/*
