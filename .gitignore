@@ -14,6 +14,7 @@ venv/
 # Generated data outputs
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/cleaned_matches.parquet
 data/features/*
 !data/features/.gitkeep
 data/predictions/*
