@@ -338,7 +338,7 @@ Place raw ATP match CSV files inside:
 data/raw/
 ```
 
-Run the full pipeline:
+Run the current preprocessing pipeline:
 
 ```bash
 python main.py
@@ -358,11 +358,21 @@ Feature dataset:
 data/features/match_features.parquet
 ```
 
+Train / validation / test split files:
+
+```text
+data/features/train.csv
+data/features/validation.csv
+data/features/test.csv
+```
+
 Trained model:
 
 ```text
 models/tennis_model.pkl
 ```
+
+Status: planned
 
 Evaluation reports:
 
@@ -370,6 +380,8 @@ Evaluation reports:
 reports/metrics.json
 reports/confusion_matrix.png
 ```
+
+Status: planned
 
 ## Future Improvements
 
@@ -390,7 +402,7 @@ Planned improvements:
 - [x] Data Ingestion
 - [x] Data Cleaning
 - [x] Feature Engineering
-- [ ] Data Leakage Prevention Review
+- [x] Data Leakage Prevention Review
 - [x] Train / Validation / Test Split
 - [ ] Baseline Model
 - [ ] Model Training
