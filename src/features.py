@@ -32,6 +32,14 @@ PLAYER_COLUMNS = [
     "rank_points",
 ]
 
+DIFFERENCE_FEATURES = {
+    "rank_diff": ("player_rank", "opponent_rank"),
+    "rank_points_diff": ("player_rank_points", "opponent_rank_points"),
+    "age_diff": ("player_age", "opponent_age"),
+    "height_diff": ("player_ht", "opponent_ht"),
+    "seed_diff": ("player_seed", "opponent_seed"),
+}
+
 
 def add_match_id(matches: pd.DataFrame) -> pd.DataFrame:
     """Create a unique match identifier."""
@@ -81,6 +89,45 @@ def create_player_opponent_rows(matches: pd.DataFrame) -> pd.DataFrame:
     )
 
     return pd.concat([winner_rows, loser_rows], ignore_index=True)
+
+
+def add_difference_features(match_features: pd.DataFrame) -> pd.DataFrame:
+    """Create numeric difference features between player and opponent."""
+    features = match_features.copy()
+
+    for feature_name, (player_column, opponent_column) in DIFFERENCE_FEATURES.items():
+        features[feature_name] = features[player_column] - features[opponent_column]
+
+    return features
+
+
+def add_matchup_features(match_features: pd.DataFrame) -> pd.DataFrame:
+    """Create player/opponent matchup features."""
+    features = match_features.copy()
+
+    features["hand_matchup"] = (
+        features["player_hand"].astype(str)
+        + "_vs_"
+        + features["opponent_hand"].astype(str)
+    )
+    features["ioc_matchup"] = (
+        features["player_ioc"].astype(str)
+        + "_vs_"
+        + features["opponent_ioc"].astype(str)
+    )
+    features["same_ioc"] = (
+        features["player_ioc"] == features["opponent_ioc"]
+    ).astype("int8")
+
+    return features
+
+
+def create_match_features(matches: pd.DataFrame) -> pd.DataFrame:
+    """Create the current match feature dataset."""
+    features = create_player_opponent_rows(matches)
+    features = add_difference_features(features)
+    features = add_matchup_features(features)
+    return features
 
 
 def save_match_features(
