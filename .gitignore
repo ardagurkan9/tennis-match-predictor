@@ -18,6 +18,9 @@ data/processed/*
 data/features/*
 !data/features/.gitkeep
 !data/features/match_features.parquet
+!data/features/train.csv
+!data/features/validation.csv
+!data/features/test.csv
 data/predictions/*
 !data/predictions/.gitkeep
 models/*

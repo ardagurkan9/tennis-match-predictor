@@ -211,9 +211,9 @@ test: final year
 Example:
 
 ```text
-train: 2015-2021
-validation: 2022
-test: 2023
+train: 2015-2023
+validation: 2024
+test: 2025
 ```
 
 Responsible file:
@@ -391,7 +391,7 @@ Planned improvements:
 - [x] Data Cleaning
 - [x] Feature Engineering
 - [ ] Data Leakage Prevention Review
-- [ ] Train / Validation / Test Split
+- [x] Train / Validation / Test Split
 - [ ] Baseline Model
 - [ ] Model Training
 - [ ] Evaluation
