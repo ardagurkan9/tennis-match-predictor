@@ -40,6 +40,15 @@ DIFFERENCE_FEATURES = {
     "seed_diff": ("player_seed", "opponent_seed"),
 }
 
+CATEGORICAL_COLUMNS_TO_ENCODE = [
+    "surface",
+    "tourney_level",
+    "round",
+    "player_hand",
+    "opponent_hand",
+    "hand_matchup",
+]
+
 
 def add_match_id(matches: pd.DataFrame) -> pd.DataFrame:
     """Create a unique match identifier."""
@@ -122,11 +131,26 @@ def add_matchup_features(match_features: pd.DataFrame) -> pd.DataFrame:
     return features
 
 
+def encode_categorical_features(match_features: pd.DataFrame) -> pd.DataFrame:
+    """One-hot encode selected categorical feature columns."""
+    columns_to_encode = [
+        column for column in CATEGORICAL_COLUMNS_TO_ENCODE
+        if column in match_features.columns
+    ]
+
+    return pd.get_dummies(
+        match_features,
+        columns=columns_to_encode,
+        dtype="int8",
+    )
+
+
 def create_match_features(matches: pd.DataFrame) -> pd.DataFrame:
     """Create the current match feature dataset."""
     features = create_player_opponent_rows(matches)
     features = add_difference_features(features)
     features = add_matchup_features(features)
+    features = encode_categorical_features(features)
     return features
 
 
