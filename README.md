@@ -242,6 +242,13 @@ Responsible file:
 src/evaluate.py
 ```
 
+Current rank-based baseline results:
+
+```text
+validation_baseline_accuracy: 0.6348
+test_baseline_accuracy: 0.6368
+```
+
 ## 6. Model Training
 
 The project starts with simple and interpretable models before trying more complex models.
@@ -404,7 +411,7 @@ Planned improvements:
 - [x] Feature Engineering
 - [x] Data Leakage Prevention Review
 - [x] Train / Validation / Test Split
-- [ ] Baseline Model
+- [x] Baseline Model
 - [ ] Model Training
 - [ ] Evaluation
 - [ ] Prediction
