@@ -27,3 +27,4 @@ models/*
 !models/.gitkeep
 reports/*
 !reports/.gitkeep
+!reports/progress_report.md
