@@ -133,6 +133,7 @@ def add_matchup_features(match_features: pd.DataFrame) -> pd.DataFrame:
 
 def encode_categorical_features(match_features: pd.DataFrame) -> pd.DataFrame:
     """One-hot encode selected categorical feature columns."""
+
     columns_to_encode = [
         column for column in CATEGORICAL_COLUMNS_TO_ENCODE
         if column in match_features.columns
@@ -147,6 +148,7 @@ def encode_categorical_features(match_features: pd.DataFrame) -> pd.DataFrame:
 
 def create_match_features(matches: pd.DataFrame) -> pd.DataFrame:
     """Create the current match feature dataset."""
+    
     features = create_player_opponent_rows(matches)
     features = add_difference_features(features)
     features = add_matchup_features(features)
