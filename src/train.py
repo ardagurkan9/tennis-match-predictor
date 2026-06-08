@@ -4,6 +4,7 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, log_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -73,6 +74,24 @@ def build_logistic_regression_model() -> Pipeline:
     )
 
 
+def build_random_forest_model() -> Pipeline:
+    """Build the random forest model pipeline."""
+    return Pipeline(
+        steps=[
+            (
+                "model",
+                RandomForestClassifier(
+                    n_estimators=300,
+                    min_samples_leaf=5,
+                    max_features="sqrt",
+                    n_jobs=-1,
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
+
+
 def evaluate_classifier(
     model: Pipeline,
     x: pd.DataFrame,
@@ -121,12 +140,34 @@ def train_logistic_regression() -> tuple[Pipeline, dict[str, dict[str, float]], 
     return model, metrics, model_path
 
 
-def main() -> None:
-    """Train the logistic regression model."""
-    _, metrics, model_path = train_logistic_regression()
+def train_random_forest() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+    """Train and evaluate the random forest model."""
+    train, validation, test = load_split_data()
 
-    print("Logistic regression model")
-    print("-------------------------")
+    x_train, y_train = split_features_and_target(train)
+    x_validation, y_validation = split_features_and_target(validation)
+    x_test, y_test = split_features_and_target(test)
+
+    model = build_random_forest_model()
+    model.fit(x_train, y_train)
+
+    metrics = {
+        "validation": evaluate_classifier(model, x_validation, y_validation),
+        "test": evaluate_classifier(model, x_test, y_test),
+    }
+    model_path = save_model(model, output_path="models/random_forest.pkl")
+
+    return model, metrics, model_path
+
+
+def print_model_report(
+    model_name: str,
+    metrics: dict[str, dict[str, float]],
+    model_path: Path,
+) -> None:
+    """Print model training and evaluation results."""
+    print(model_name)
+    print("-" * len(model_name))
     print(f"Model saved to: {model_path}")
 
     for split_name, split_metrics in metrics.items():
@@ -138,6 +179,24 @@ def main() -> None:
                 print(f"  {metric_value[1]}")
             else:
                 print(f"{metric_name}: {metric_value:.4f}")
+
+
+def main() -> None:
+    """Train the logistic regression and random forest models."""
+    _, logistic_metrics, logistic_model_path = train_logistic_regression()
+    _, random_forest_metrics, random_forest_model_path = train_random_forest()
+
+    print_model_report(
+        "Logistic regression model",
+        logistic_metrics,
+        logistic_model_path,
+    )
+    print()
+    print_model_report(
+        "Random forest model",
+        random_forest_metrics,
+        random_forest_model_path,
+    )
 
 
 if __name__ == "__main__":

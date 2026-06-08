@@ -270,7 +270,8 @@ LightGBM
 The trained model is saved to:
 
 ```text
-models/tennis_model.pkl
+models/logistic_regression.pkl
+models/random_forest.pkl
 ```
 
 Responsible file:
@@ -376,10 +377,11 @@ data/features/test.csv
 Trained model:
 
 ```text
-models/tennis_model.pkl
+models/logistic_regression.pkl
+models/random_forest.pkl
 ```
 
-Status: planned
+Status: done
 
 Evaluation reports:
 
@@ -412,6 +414,6 @@ Planned improvements:
 - [x] Data Leakage Prevention Review
 - [x] Train / Validation / Test Split
 - [x] Baseline Model
-- [ ] Model Training
+- [x] Model Training
 - [ ] Evaluation
 - [ ] Prediction

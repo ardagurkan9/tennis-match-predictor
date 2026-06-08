@@ -37,6 +37,16 @@ Year-based split applied to prevent temporal leakage:
 ### 6. Logistic Regression (`src/train.py`)
 - `StandardScaler → LogisticRegression(max_iter=1000)` pipeline built
 - Model trained and saved to: `models/logistic_regression.pkl`
+- Validation accuracy: **0.6364**
+- Test accuracy: **0.6407**
+
+### 7. Random Forest (`src/train.py`)
+- `RandomForestClassifier(n_estimators=300, min_samples_leaf=5, max_features="sqrt")` pipeline built
+- Model trained and saved to: `models/random_forest.pkl`
+- Validation accuracy: **0.6343**
+- Validation ROC-AUC: **0.7031**
+- Test accuracy: **0.6459**
+- Test ROC-AUC: **0.7051**
 
 ---
 
@@ -68,7 +78,8 @@ Year-based split applied to prevent temporal leakage:
 | Feature Engineering | Done |
 | Train/Val/Test Split | Done |
 | Rank-Based Baseline | Done (~63.5%) |
-| Logistic Regression | Done (model saved) |
+| Logistic Regression | Done (test accuracy: 0.6407) |
+| Random Forest | Done (test accuracy: 0.6459) |
 | Evaluation Report | Missing |
 | Prediction Script | Missing |
 | Advanced Features | Planned |
