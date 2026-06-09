@@ -259,11 +259,6 @@ Initial models:
 Logistic Regression
 Random Forest
 XGBoost
-```
-
-Optional future models:
-
-```text
 LightGBM
 ```
 
@@ -273,6 +268,7 @@ The trained model is saved to:
 models/logistic_regression.pkl
 models/random_forest.pkl
 models/xgboost.pkl
+models/lightgbm.pkl
 ```
 
 Responsible file:
@@ -381,6 +377,7 @@ Trained model:
 models/logistic_regression.pkl
 models/random_forest.pkl
 models/xgboost.pkl
+models/lightgbm.pkl
 ```
 
 Status: done

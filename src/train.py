@@ -122,6 +122,36 @@ def build_xgboost_model() -> Pipeline:
     )
 
 
+def build_lightgbm_model() -> Pipeline:
+    """Build the LightGBM model pipeline."""
+    try:
+        from lightgbm import LGBMClassifier
+    except ImportError as error:
+        raise ImportError(
+            "lightgbm is required to train the LightGBM model. "
+            "Install project dependencies with: pip install -r requirements.txt"
+        ) from error
+
+    return Pipeline(
+        steps=[
+            (
+                "model",
+                LGBMClassifier(
+                    n_estimators=300,
+                    max_depth=4,
+                    learning_rate=0.05,
+                    subsample=0.9,
+                    colsample_bytree=0.9,
+                    objective="binary",
+                    random_state=42,
+                    n_jobs=-1,
+                    verbose=-1,
+                ),
+            ),
+        ]
+    )
+
+
 def evaluate_classifier(
     model: Pipeline,
     x: pd.DataFrame,
@@ -210,6 +240,26 @@ def train_xgboost() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     return model, metrics, model_path
 
 
+def train_lightgbm() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+    """Train and evaluate the LightGBM model."""
+    train, validation, test = load_split_data()
+
+    x_train, y_train = split_features_and_target(train)
+    x_validation, y_validation = split_features_and_target(validation)
+    x_test, y_test = split_features_and_target(test)
+
+    model = build_lightgbm_model()
+    model.fit(x_train, y_train)
+
+    metrics = {
+        "validation": evaluate_classifier(model, x_validation, y_validation),
+        "test": evaluate_classifier(model, x_test, y_test),
+    }
+    model_path = save_model(model, output_path="models/lightgbm.pkl")
+
+    return model, metrics, model_path
+
+
 def print_model_report(
     model_name: str,
     metrics: dict[str, dict[str, float]],
@@ -232,10 +282,11 @@ def print_model_report(
 
 
 def main() -> None:
-    """Train the logistic regression, random forest, and XGBoost models."""
+    """Train all current model candidates."""
     _, logistic_metrics, logistic_model_path = train_logistic_regression()
     _, random_forest_metrics, random_forest_model_path = train_random_forest()
     _, xgboost_metrics, xgboost_model_path = train_xgboost()
+    _, lightgbm_metrics, lightgbm_model_path = train_lightgbm()
 
     print_model_report(
         "Logistic regression model",
@@ -253,6 +304,12 @@ def main() -> None:
         "XGBoost model",
         xgboost_metrics,
         xgboost_model_path,
+    )
+    print()
+    print_model_report(
+        "LightGBM model",
+        lightgbm_metrics,
+        lightgbm_model_path,
     )
 
 

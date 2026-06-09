@@ -56,6 +56,14 @@ Year-based split applied to prevent temporal leakage:
 - Test accuracy: **0.6508**
 - Test ROC-AUC: **0.7150**
 
+### 9. LightGBM (`src/train.py`)
+- `LGBMClassifier(n_estimators=300, max_depth=4, learning_rate=0.05)` pipeline built
+- Model trained and saved to: `models/lightgbm.pkl`
+- Validation accuracy: **0.6394**
+- Validation ROC-AUC: **0.7076**
+- Test accuracy: **0.6529**
+- Test ROC-AUC: **0.7156**
+
 ---
 
 ## Not Yet Done
@@ -89,6 +97,7 @@ Year-based split applied to prevent temporal leakage:
 | Logistic Regression | Done (test accuracy: 0.6407) |
 | Random Forest | Done (test accuracy: 0.6459) |
 | XGBoost | Done (test accuracy: 0.6508) |
+| LightGBM | Done (test accuracy: 0.6529) |
 | Evaluation Report | Missing |
 | Prediction Script | Missing |
 | Advanced Features | Planned |
