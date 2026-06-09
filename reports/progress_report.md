@@ -48,6 +48,14 @@ Year-based split applied to prevent temporal leakage:
 - Test accuracy: **0.6459**
 - Test ROC-AUC: **0.7051**
 
+### 8. XGBoost (`src/train.py`)
+- `XGBClassifier(n_estimators=300, max_depth=4, learning_rate=0.05)` pipeline built
+- Model trained and saved to: `models/xgboost.pkl`
+- Validation accuracy: **0.6402**
+- Validation ROC-AUC: **0.7086**
+- Test accuracy: **0.6508**
+- Test ROC-AUC: **0.7150**
+
 ---
 
 ## Not Yet Done
@@ -80,6 +88,7 @@ Year-based split applied to prevent temporal leakage:
 | Rank-Based Baseline | Done (~63.5%) |
 | Logistic Regression | Done (test accuracy: 0.6407) |
 | Random Forest | Done (test accuracy: 0.6459) |
+| XGBoost | Done (test accuracy: 0.6508) |
 | Evaluation Report | Missing |
 | Prediction Script | Missing |
 | Advanced Features | Planned |

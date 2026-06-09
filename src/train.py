@@ -92,6 +92,36 @@ def build_random_forest_model() -> Pipeline:
     )
 
 
+def build_xgboost_model() -> Pipeline:
+    """Build the XGBoost model pipeline."""
+    try:
+        from xgboost import XGBClassifier
+    except ImportError as error:
+        raise ImportError(
+            "xgboost is required to train the XGBoost model. "
+            "Install project dependencies with: pip install -r requirements.txt"
+        ) from error
+
+    return Pipeline(
+        steps=[
+            (
+                "model",
+                XGBClassifier(
+                    n_estimators=300,
+                    max_depth=4,
+                    learning_rate=0.05,
+                    subsample=0.9,
+                    colsample_bytree=0.9,
+                    objective="binary:logistic",
+                    eval_metric="logloss",
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+            ),
+        ]
+    )
+
+
 def evaluate_classifier(
     model: Pipeline,
     x: pd.DataFrame,
@@ -160,6 +190,26 @@ def train_random_forest() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     return model, metrics, model_path
 
 
+def train_xgboost() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+    """Train and evaluate the XGBoost model."""
+    train, validation, test = load_split_data()
+
+    x_train, y_train = split_features_and_target(train)
+    x_validation, y_validation = split_features_and_target(validation)
+    x_test, y_test = split_features_and_target(test)
+
+    model = build_xgboost_model()
+    model.fit(x_train, y_train)
+
+    metrics = {
+        "validation": evaluate_classifier(model, x_validation, y_validation),
+        "test": evaluate_classifier(model, x_test, y_test),
+    }
+    model_path = save_model(model, output_path="models/xgboost.pkl")
+
+    return model, metrics, model_path
+
+
 def print_model_report(
     model_name: str,
     metrics: dict[str, dict[str, float]],
@@ -182,9 +232,10 @@ def print_model_report(
 
 
 def main() -> None:
-    """Train the logistic regression and random forest models."""
+    """Train the logistic regression, random forest, and XGBoost models."""
     _, logistic_metrics, logistic_model_path = train_logistic_regression()
     _, random_forest_metrics, random_forest_model_path = train_random_forest()
+    _, xgboost_metrics, xgboost_model_path = train_xgboost()
 
     print_model_report(
         "Logistic regression model",
@@ -196,6 +247,12 @@ def main() -> None:
         "Random forest model",
         random_forest_metrics,
         random_forest_model_path,
+    )
+    print()
+    print_model_report(
+        "XGBoost model",
+        xgboost_metrics,
+        xgboost_model_path,
     )
 
 
