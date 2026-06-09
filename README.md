@@ -391,9 +391,13 @@ reports/confusion_matrix.png
 
 Status: planned
 
-## Future Improvements
+## Next Focus: Accuracy Improvements
 
-Planned improvements:
+The first full modeling pass is complete. The current best model is LightGBM with
+approximately 65.29% test accuracy.
+
+The next goal is to improve prediction accuracy with stronger pre-match tennis
+features:
 
 * Rolling last 5 match win rate
 * Rolling last 10 match win rate
@@ -402,6 +406,9 @@ Planned improvements:
 * Head-to-head win rate
 * Elo rating
 * Surface-specific Elo rating
+
+Future product improvements:
+
 * Command-line prediction interface
 * FastAPI prediction endpoint
 
@@ -414,5 +421,7 @@ Planned improvements:
 - [x] Train / Validation / Test Split
 - [x] Baseline Model
 - [x] Model Training
-- [ ] Evaluation
-- [ ] Prediction
+- [x] Model Benchmarking
+- [ ] Advanced Feature Engineering for Higher Accuracy
+- [ ] Final Evaluation Report
+- [ ] Prediction Interface
