@@ -22,6 +22,14 @@ Raw ATP match CSV files are read from `data/raw/` and combined into a single Dat
 - Matchup features added: `hand_matchup`, `ioc_matchup`, `same_ioc`
 - Categorical columns one-hot encoded: `surface`, `tourney_level`, `round`, `player_hand`, `opponent_hand`
 - Feature dataset saved to: `data/features/match_features.parquet`
+- Advanced rolling form feature dataset saved separately to: `data/features/advanced/match_features.parquet`
+- Advanced split files saved to: `data/features/advanced/train.csv`, `validation.csv`, `test.csv`
+
+### 3.1 Advanced Rolling Form Features (`src/features.py`)
+- Added prior last 5 match win rate for player and opponent
+- Added prior last 10 match win rate for player and opponent
+- Added `last5_win_rate_diff` and `last10_win_rate_diff`
+- Same `tourney_date` matches are not used as prior history to prevent leakage
 
 ### 4. Train / Validation / Test Split (`src/split.py`)
 Year-based split applied to prevent temporal leakage:
@@ -64,6 +72,14 @@ Year-based split applied to prevent temporal leakage:
 - Test accuracy: **0.6529**
 - Test ROC-AUC: **0.7156**
 
+### 10. Advanced LightGBM With Rolling Form Features
+- Model trained on `data/features/advanced/train.csv`
+- Model saved separately to: `models/advanced/lightgbm.pkl`
+- Validation accuracy: **0.6460**
+- Validation ROC-AUC: **0.7119**
+- Test accuracy: **0.6613**
+- Test ROC-AUC: **0.7207**
+
 ---
 
 ## Not Yet Done
@@ -77,9 +93,9 @@ Year-based split applied to prevent temporal leakage:
 - Goal: given two player names and a surface, return win probabilities
 
 ### Advanced Features (Planned)
-- Rolling last 5/10 match win rate
 - Surface-specific win rate
 - Head-to-head history
+- Days since last match
 - Elo rating and surface-specific Elo
 
 ---
@@ -98,6 +114,8 @@ Year-based split applied to prevent temporal leakage:
 | Random Forest | Done (test accuracy: 0.6459) |
 | XGBoost | Done (test accuracy: 0.6508) |
 | LightGBM | Done (test accuracy: 0.6529) |
+| Rolling Form Features | Done (saved separately) |
+| Advanced LightGBM | Done (test accuracy: 0.6613) |
 | Evaluation Report | Missing |
 | Prediction Script | Missing |
 | Advanced Features | Planned |

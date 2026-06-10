@@ -32,12 +32,19 @@ PLAYER_COLUMNS = [
     "rank_points",
 ]
 
+ADVANCED_PLAYER_COLUMNS = [
+    "last5_win_rate",
+    "last10_win_rate",
+]
+
 DIFFERENCE_FEATURES = {
     "rank_diff": ("player_rank", "opponent_rank"),
     "rank_points_diff": ("player_rank_points", "opponent_rank_points"),
     "age_diff": ("player_age", "opponent_age"),
     "height_diff": ("player_ht", "opponent_ht"),
     "seed_diff": ("player_seed", "opponent_seed"),
+    "last5_win_rate_diff": ("player_last5_win_rate", "opponent_last5_win_rate"),
+    "last10_win_rate_diff": ("player_last10_win_rate", "opponent_last10_win_rate"),
 }
 
 CATEGORICAL_COLUMNS_TO_ENCODE = [
@@ -71,7 +78,15 @@ def build_player_rows(
 
     rows = matches[CONTEXT_COLUMNS].copy()
 
-    for column in PLAYER_COLUMNS:
+    optional_columns = [
+        column for column in ADVANCED_PLAYER_COLUMNS
+        if (
+            f"{player_prefix}_{column}" in matches.columns
+            and f"{opponent_prefix}_{column}" in matches.columns
+        )
+    ]
+
+    for column in PLAYER_COLUMNS + optional_columns:
         rows[f"player_{column}"] = matches[f"{player_prefix}_{column}"]
         rows[f"opponent_{column}"] = matches[f"{opponent_prefix}_{column}"]
 
@@ -105,7 +120,67 @@ def add_difference_features(match_features: pd.DataFrame) -> pd.DataFrame:
     features = match_features.copy()
 
     for feature_name, (player_column, opponent_column) in DIFFERENCE_FEATURES.items():
-        features[feature_name] = features[player_column] - features[opponent_column]
+        if player_column in features.columns and opponent_column in features.columns:
+            features[feature_name] = features[player_column] - features[opponent_column]
+
+    return features
+
+
+def calculate_prior_win_rate(results: list[int], window: int) -> float:
+    """Calculate a player's prior rolling win rate."""
+    recent_results = results[-window:]
+
+    if not recent_results:
+        return 0.5
+
+    return float(sum(recent_results) / len(recent_results))
+
+
+def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
+    """Add leakage-free rolling win-rate features for each player."""
+    features = matches.copy()
+    features["tourney_date"] = pd.to_datetime(features["tourney_date"])
+    features = features.sort_values(
+        ["tourney_date", "tourney_id", "match_num"]
+    ).reset_index(drop=True)
+
+    player_results: dict[int, list[int]] = {}
+
+    for prefix in ["winner", "loser"]:
+        features[f"{prefix}_last5_win_rate"] = 0.5
+        features[f"{prefix}_last10_win_rate"] = 0.5
+
+    for _, date_matches in features.groupby("tourney_date", sort=False):
+        pending_updates: list[tuple[int, int]] = []
+
+        for row_index, match in date_matches.iterrows():
+            winner_id = int(match["winner_id"])
+            loser_id = int(match["loser_id"])
+
+            winner_results = player_results.get(winner_id, [])
+            loser_results = player_results.get(loser_id, [])
+
+            features.at[row_index, "winner_last5_win_rate"] = calculate_prior_win_rate(
+                winner_results,
+                window=5,
+            )
+            features.at[row_index, "winner_last10_win_rate"] = calculate_prior_win_rate(
+                winner_results,
+                window=10,
+            )
+            features.at[row_index, "loser_last5_win_rate"] = calculate_prior_win_rate(
+                loser_results,
+                window=5,
+            )
+            features.at[row_index, "loser_last10_win_rate"] = calculate_prior_win_rate(
+                loser_results,
+                window=10,
+            )
+
+            pending_updates.extend([(winner_id, 1), (loser_id, 0)])
+
+        for player_id, result in pending_updates:
+            player_results.setdefault(player_id, []).append(result)
 
     return features
 
@@ -148,12 +223,17 @@ def encode_categorical_features(match_features: pd.DataFrame) -> pd.DataFrame:
 
 def create_match_features(matches: pd.DataFrame) -> pd.DataFrame:
     """Create the current match feature dataset."""
-    
     features = create_player_opponent_rows(matches)
     features = add_difference_features(features)
     features = add_matchup_features(features)
     features = encode_categorical_features(features)
     return features
+
+
+def create_advanced_match_features(matches: pd.DataFrame) -> pd.DataFrame:
+    """Create match features with leakage-free rolling form features."""
+    matches_with_form = add_rolling_form_features(matches)
+    return create_match_features(matches_with_form)
 
 
 def save_match_features(
@@ -165,3 +245,11 @@ def save_match_features(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     match_features.to_parquet(output_path, index=False)
     return output_path
+
+
+def save_advanced_match_features(
+    match_features: pd.DataFrame,
+    output_path: str | Path = "data/features/advanced/match_features.parquet",
+) -> Path:
+    """Save advanced match feature data to a separate parquet file."""
+    return save_match_features(match_features, output_path)

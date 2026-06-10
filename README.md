@@ -180,6 +180,16 @@ Feature data is saved to:
 data/features/match_features.parquet
 ```
 
+Advanced feature data is saved separately so the first version and improved
+version can be compared:
+
+```text
+data/features/advanced/match_features.parquet
+data/features/advanced/train.csv
+data/features/advanced/validation.csv
+data/features/advanced/test.csv
+```
+
 Responsible file:
 
 ```text
@@ -361,6 +371,7 @@ Feature dataset:
 
 ```text
 data/features/match_features.parquet
+data/features/advanced/match_features.parquet
 ```
 
 Train / validation / test split files:
@@ -369,6 +380,9 @@ Train / validation / test split files:
 data/features/train.csv
 data/features/validation.csv
 data/features/test.csv
+data/features/advanced/train.csv
+data/features/advanced/validation.csv
+data/features/advanced/test.csv
 ```
 
 Trained model:
@@ -378,6 +392,7 @@ models/logistic_regression.pkl
 models/random_forest.pkl
 models/xgboost.pkl
 models/lightgbm.pkl
+models/advanced/lightgbm.pkl
 ```
 
 Status: done
@@ -396,11 +411,14 @@ Status: planned
 The first full modeling pass is complete. The current best model is LightGBM with
 approximately 65.29% test accuracy.
 
+After adding rolling form features, the advanced LightGBM benchmark reached
+approximately 66.13% test accuracy.
+
 The next goal is to improve prediction accuracy with stronger pre-match tennis
 features:
 
-* Rolling last 5 match win rate
-* Rolling last 10 match win rate
+* Rolling last 5 match win rate: done
+* Rolling last 10 match win rate: done
 * Surface-specific win rate
 * Days since last match
 * Head-to-head win rate
@@ -423,5 +441,11 @@ Future product improvements:
 - [x] Model Training
 - [x] Model Benchmarking
 - [ ] Advanced Feature Engineering for Higher Accuracy
+  - [x] Rolling last 5/10 match win rate
+  - [ ] Surface-specific win rate
+  - [ ] Days since last match
+  - [ ] Head-to-head win rate
+  - [ ] Elo rating
+  - [ ] Surface Elo rating
 - [ ] Final Evaluation Report
 - [ ] Prediction Interface
