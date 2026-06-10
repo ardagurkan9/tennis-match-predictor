@@ -174,6 +174,20 @@ best_of
 round
 ```
 
+Advanced features currently include:
+
+```text
+player_last5_win_rate
+opponent_last5_win_rate
+player_last10_win_rate
+opponent_last10_win_rate
+player_surface_win_rate
+opponent_surface_win_rate
+last5_win_rate_diff
+last10_win_rate_diff
+surface_win_rate_diff
+```
+
 Feature data is saved to:
 
 ```text
@@ -411,15 +425,16 @@ Status: planned
 The first full modeling pass is complete. The current best model is LightGBM with
 approximately 65.29% test accuracy.
 
-After adding rolling form features, the advanced LightGBM benchmark reached
-approximately 66.13% test accuracy.
+After adding rolling form and surface-specific win-rate features, the advanced
+LightGBM benchmark reached approximately 66.10% test accuracy and 72.48%
+test ROC-AUC.
 
 The next goal is to improve prediction accuracy with stronger pre-match tennis
 features:
 
 * Rolling last 5 match win rate: done
 * Rolling last 10 match win rate: done
-* Surface-specific win rate
+* Surface-specific win rate: done
 * Days since last match
 * Head-to-head win rate
 * Elo rating
@@ -442,7 +457,7 @@ Future product improvements:
 - [x] Model Benchmarking
 - [ ] Advanced Feature Engineering for Higher Accuracy
   - [x] Rolling last 5/10 match win rate
-  - [ ] Surface-specific win rate
+  - [x] Surface-specific win rate
   - [ ] Days since last match
   - [ ] Head-to-head win rate
   - [ ] Elo rating

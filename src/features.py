@@ -35,6 +35,7 @@ PLAYER_COLUMNS = [
 ADVANCED_PLAYER_COLUMNS = [
     "last5_win_rate",
     "last10_win_rate",
+    "surface_win_rate",
 ]
 
 DIFFERENCE_FEATURES = {
@@ -45,6 +46,10 @@ DIFFERENCE_FEATURES = {
     "seed_diff": ("player_seed", "opponent_seed"),
     "last5_win_rate_diff": ("player_last5_win_rate", "opponent_last5_win_rate"),
     "last10_win_rate_diff": ("player_last10_win_rate", "opponent_last10_win_rate"),
+    "surface_win_rate_diff": (
+        "player_surface_win_rate",
+        "opponent_surface_win_rate",
+    ),
 }
 
 CATEGORICAL_COLUMNS_TO_ENCODE = [
@@ -137,7 +142,7 @@ def calculate_prior_win_rate(results: list[int], window: int) -> float:
 
 
 def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
-    """Add leakage-free rolling win-rate features for each player."""
+    """Add leakage-free rolling and surface win-rate features for each player."""
     features = matches.copy()
     features["tourney_date"] = pd.to_datetime(features["tourney_date"])
     features = features.sort_values(
@@ -145,20 +150,31 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
     ).reset_index(drop=True)
 
     player_results: dict[int, list[int]] = {}
+    player_surface_results: dict[int, dict[str, list[int]]] = {}
 
     for prefix in ["winner", "loser"]:
         features[f"{prefix}_last5_win_rate"] = 0.5
         features[f"{prefix}_last10_win_rate"] = 0.5
+        features[f"{prefix}_surface_win_rate"] = 0.5
 
     for _, date_matches in features.groupby("tourney_date", sort=False):
-        pending_updates: list[tuple[int, int]] = []
+        pending_updates: list[tuple[int, str, int]] = []
 
         for row_index, match in date_matches.iterrows():
             winner_id = int(match["winner_id"])
             loser_id = int(match["loser_id"])
+            surface = str(match["surface"])
 
             winner_results = player_results.get(winner_id, [])
             loser_results = player_results.get(loser_id, [])
+            winner_surface_results = player_surface_results.get(winner_id, {}).get(
+                surface,
+                [],
+            )
+            loser_surface_results = player_surface_results.get(loser_id, {}).get(
+                surface,
+                [],
+            )
 
             features.at[row_index, "winner_last5_win_rate"] = calculate_prior_win_rate(
                 winner_results,
@@ -176,11 +192,23 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 loser_results,
                 window=10,
             )
+            features.at[row_index, "winner_surface_win_rate"] = calculate_prior_win_rate(
+                winner_surface_results,
+                window=len(winner_surface_results),
+            )
+            features.at[row_index, "loser_surface_win_rate"] = calculate_prior_win_rate(
+                loser_surface_results,
+                window=len(loser_surface_results),
+            )
 
-            pending_updates.extend([(winner_id, 1), (loser_id, 0)])
+            pending_updates.extend([(winner_id, surface, 1), (loser_id, surface, 0)])
 
-        for player_id, result in pending_updates:
+        for player_id, surface, result in pending_updates:
             player_results.setdefault(player_id, []).append(result)
+            player_surface_results.setdefault(player_id, {}).setdefault(
+                surface,
+                [],
+            ).append(result)
 
     return features
 
@@ -231,7 +259,7 @@ def create_match_features(matches: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_advanced_match_features(matches: pd.DataFrame) -> pd.DataFrame:
-    """Create match features with leakage-free rolling form features."""
+    """Create match features with leakage-free advanced form features."""
     matches_with_form = add_rolling_form_features(matches)
     return create_match_features(matches_with_form)
 
