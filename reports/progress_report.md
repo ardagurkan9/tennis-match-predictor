@@ -72,13 +72,13 @@ Year-based split applied to prevent temporal leakage:
 - Test accuracy: **0.6529**
 - Test ROC-AUC: **0.7156**
 
-### 10. Advanced LightGBM With Rolling and Surface Form Features
+### 10. Advanced LightGBM With Rolling, Surface, and Recency Features
 - Model trained on `data/features/advanced/train.csv`
 - Model saved separately to: `models/advanced/lightgbm.pkl`
-- Validation accuracy: **0.6484**
-- Validation ROC-AUC: **0.7186**
-- Test accuracy: **0.6610**
-- Test ROC-AUC: **0.7248**
+- Validation accuracy: **0.6536**
+- Validation ROC-AUC: **0.7180**
+- Test accuracy: **0.6693**
+- Test ROC-AUC: **0.7289**
 
 ---
 
@@ -94,7 +94,6 @@ Year-based split applied to prevent temporal leakage:
 
 ### Advanced Features (Planned)
 - Head-to-head history
-- Days since last match
 - Elo rating and surface-specific Elo
 
 ---
@@ -115,7 +114,8 @@ Year-based split applied to prevent temporal leakage:
 | LightGBM | Done (test accuracy: 0.6529) |
 | Rolling Form Features | Done (saved separately) |
 | Surface-Specific Features | Done (saved separately) |
-| Advanced LightGBM | Done (test accuracy: 0.6610, ROC-AUC: 0.7248) |
+| Days Since Last Match | Done (saved separately) |
+| Advanced LightGBM | Done (test accuracy: 0.6693, ROC-AUC: 0.7289) |
 | Evaluation Report | Missing |
 | Prediction Script | Missing |
 | Advanced Features | Planned |

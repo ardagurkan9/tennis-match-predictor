@@ -36,6 +36,7 @@ ADVANCED_PLAYER_COLUMNS = [
     "last5_win_rate",
     "last10_win_rate",
     "surface_win_rate",
+    "days_since_last_match",
 ]
 
 DIFFERENCE_FEATURES = {
@@ -50,7 +51,13 @@ DIFFERENCE_FEATURES = {
         "player_surface_win_rate",
         "opponent_surface_win_rate",
     ),
+    "days_since_last_match_diff": (
+        "player_days_since_last_match",
+        "opponent_days_since_last_match",
+    ),
 }
+
+DEFAULT_DAYS_SINCE_LAST_MATCH = 365
 
 CATEGORICAL_COLUMNS_TO_ENCODE = [
     "surface",
@@ -141,8 +148,19 @@ def calculate_prior_win_rate(results: list[int], window: int) -> float:
     return float(sum(recent_results) / len(recent_results))
 
 
+def calculate_days_since_last_match(
+    current_date: pd.Timestamp,
+    previous_date: pd.Timestamp | None,
+) -> int:
+    """Calculate days since a player's previous match."""
+    if previous_date is None:
+        return DEFAULT_DAYS_SINCE_LAST_MATCH
+
+    return int((current_date - previous_date).days)
+
+
 def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
-    """Add leakage-free rolling and surface win-rate features for each player."""
+    """Add leakage-free form and recency features for each player."""
     features = matches.copy()
     features["tourney_date"] = pd.to_datetime(features["tourney_date"])
     features = features.sort_values(
@@ -151,14 +169,16 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
 
     player_results: dict[int, list[int]] = {}
     player_surface_results: dict[int, dict[str, list[int]]] = {}
+    player_last_match_dates: dict[int, pd.Timestamp] = {}
 
     for prefix in ["winner", "loser"]:
         features[f"{prefix}_last5_win_rate"] = 0.5
         features[f"{prefix}_last10_win_rate"] = 0.5
         features[f"{prefix}_surface_win_rate"] = 0.5
+        features[f"{prefix}_days_since_last_match"] = DEFAULT_DAYS_SINCE_LAST_MATCH
 
-    for _, date_matches in features.groupby("tourney_date", sort=False):
-        pending_updates: list[tuple[int, str, int]] = []
+    for match_date, date_matches in features.groupby("tourney_date", sort=False):
+        pending_updates: list[tuple[int, str, int, pd.Timestamp]] = []
 
         for row_index, match in date_matches.iterrows():
             winner_id = int(match["winner_id"])
@@ -175,6 +195,8 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 surface,
                 [],
             )
+            winner_previous_date = player_last_match_dates.get(winner_id)
+            loser_previous_date = player_last_match_dates.get(loser_id)
 
             features.at[row_index, "winner_last5_win_rate"] = calculate_prior_win_rate(
                 winner_results,
@@ -200,15 +222,26 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 loser_surface_results,
                 window=len(loser_surface_results),
             )
+            features.at[
+                row_index,
+                "winner_days_since_last_match",
+            ] = calculate_days_since_last_match(match_date, winner_previous_date)
+            features.at[
+                row_index,
+                "loser_days_since_last_match",
+            ] = calculate_days_since_last_match(match_date, loser_previous_date)
 
-            pending_updates.extend([(winner_id, surface, 1), (loser_id, surface, 0)])
+            pending_updates.extend(
+                [(winner_id, surface, 1, match_date), (loser_id, surface, 0, match_date)]
+            )
 
-        for player_id, surface, result in pending_updates:
+        for player_id, surface, result, played_date in pending_updates:
             player_results.setdefault(player_id, []).append(result)
             player_surface_results.setdefault(player_id, {}).setdefault(
                 surface,
                 [],
             ).append(result)
+            player_last_match_dates[player_id] = played_date
 
     return features
 
