@@ -187,11 +187,29 @@ player_days_since_last_match
 opponent_days_since_last_match
 player_h2h_win_rate
 opponent_h2h_win_rate
+player_matches_played
+opponent_matches_played
+player_surface_matches_played
+opponent_surface_matches_played
+player_elo_rating
+opponent_elo_rating
+player_elo_win_probability
+opponent_elo_win_probability
+player_surface_elo_rating
+opponent_surface_elo_rating
+player_surface_elo_win_probability
+opponent_surface_elo_win_probability
 last5_win_rate_diff
 last10_win_rate_diff
 surface_win_rate_diff
 days_since_last_match_diff
 h2h_win_rate_diff
+matches_played_diff
+surface_matches_played_diff
+elo_rating_diff
+elo_win_probability_diff
+surface_elo_rating_diff
+surface_elo_win_probability_diff
 ```
 
 Feature data is saved to:
@@ -431,9 +449,9 @@ Status: planned
 The first full modeling pass is complete. The current best model is LightGBM with
 approximately 65.29% test accuracy.
 
-After adding rolling form, surface-specific win-rate, days-since-last-match, and
-head-to-head features, the advanced LightGBM benchmark reached approximately
-66.57% test accuracy and 72.95% test ROC-AUC.
+After adding rolling form, surface-specific win-rate, days-since-last-match,
+head-to-head, Elo, and surface-specific Elo features, the advanced LightGBM
+benchmark reached approximately 66.69% test accuracy and 72.67% test ROC-AUC.
 
 The next goal is to improve prediction accuracy with stronger pre-match tennis
 features:
@@ -443,8 +461,8 @@ features:
 * Surface-specific win rate: done
 * Days since last match: done
 * Head-to-head win rate: done
-* Elo rating
-* Surface-specific Elo rating
+* Elo rating: done
+* Surface-specific Elo rating: done
 
 Future product improvements:
 
@@ -466,7 +484,7 @@ Future product improvements:
   - [x] Surface-specific win rate
   - [x] Days since last match
   - [x] Head-to-head win rate
-  - [ ] Elo rating
-  - [ ] Surface Elo rating
+  - [x] Elo rating
+  - [x] Surface Elo rating
 - [ ] Final Evaluation Report
 - [ ] Prediction Interface
