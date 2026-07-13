@@ -9,6 +9,7 @@ from src.features import (
     save_advanced_match_features,
 )
 from src.ingest import load_raw_matches
+from src.odds import load_odds_files, match_odds_to_matches
 from src.split import save_split_csvs, split_features_by_year
 
 
@@ -18,21 +19,29 @@ OUTPUT_DIR = Path("data/features/advanced")
 def build_advanced_features() -> None:
     print("Loading raw match data...")
     raw_matches = load_raw_matches()
-    raw_matches = raw_matches[raw_matches["tourney_date"] >= 20150000].reset_index(drop=True)
-    print(f"  Raw matches: {raw_matches.shape}")
+    print(f"  Raw matches (full history): {raw_matches.shape}")
 
     print("Computing rolling serve statistics (leakage-free)...")
     raw_with_serve = add_rolling_serve_features(raw_matches)
     serve_cols = [c for c in raw_with_serve.columns if "rolling_" in c and c.startswith("winner_")]
     print(f"  Added {len(serve_cols)} serve feature columns per player")
 
+    print("Loading and matching market odds (leakage-free, pre-match)...")
+    odds = load_odds_files()
+    raw_with_odds = match_odds_to_matches(raw_with_serve, odds)
+    match_count = int(raw_with_odds["market_odds_available"].sum())
+    print(f"  Market odds matched: {match_count} / {len(raw_with_odds)} matches ({match_count / len(raw_with_odds):.2%})")
+
     print("Cleaning matches...")
-    cleaned = clean_matches(raw_with_serve)
+    cleaned = clean_matches(raw_with_odds)
     print(f"  Cleaned shape: {cleaned.shape}")
 
-    print("Building advanced match features...")
+    print("Building advanced match features (Elo/H2H/form computed over full history)...")
     features = create_advanced_match_features(cleaned)
-    print(f"  Feature matrix shape: {features.shape}")
+    print(f"  Feature matrix shape (full history): {features.shape}")
+
+    features = features[features["tourney_year"] >= 2015].reset_index(drop=True)
+    print(f"  Feature matrix shape (2015+ only, history-warmed): {features.shape}")
 
     save_advanced_match_features(features)
     print(f"  Features saved to: {OUTPUT_DIR}/match_features.parquet")

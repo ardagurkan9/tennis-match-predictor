@@ -17,6 +17,7 @@ CONTEXT_COLUMNS = [
     "tourney_year",
     "tourney_month",
     "tourney_day",
+    "market_odds_available",
 ]
 
 PLAYER_COLUMNS = [
@@ -38,8 +39,10 @@ ADVANCED_PLAYER_COLUMNS = [
     "surface_win_rate",
     "days_since_last_match",
     "h2h_win_rate",
+    "h2h_surface_win_rate",
     "matches_played",
     "surface_matches_played",
+    "matches_last_14_days",
     "elo_rating",
     "elo_win_probability",
     "surface_elo_rating",
@@ -51,6 +54,7 @@ ADVANCED_PLAYER_COLUMNS = [
     "rolling_2nd_won_pct",
     "rolling_bp_save_pct",
     "rolling_return_won_pct",
+    "market_prob",
 ]
 
 DIFFERENCE_FEATURES = {
@@ -70,10 +74,18 @@ DIFFERENCE_FEATURES = {
         "opponent_days_since_last_match",
     ),
     "h2h_win_rate_diff": ("player_h2h_win_rate", "opponent_h2h_win_rate"),
+    "h2h_surface_win_rate_diff": (
+        "player_h2h_surface_win_rate",
+        "opponent_h2h_surface_win_rate",
+    ),
     "matches_played_diff": ("player_matches_played", "opponent_matches_played"),
     "surface_matches_played_diff": (
         "player_surface_matches_played",
         "opponent_surface_matches_played",
+    ),
+    "matches_last_14_days_diff": (
+        "player_matches_last_14_days",
+        "opponent_matches_last_14_days",
     ),
     "elo_rating_diff": ("player_elo_rating", "opponent_elo_rating"),
     "elo_win_probability_diff": (
@@ -95,11 +107,23 @@ DIFFERENCE_FEATURES = {
     "rolling_2nd_won_pct_diff": ("player_rolling_2nd_won_pct", "opponent_rolling_2nd_won_pct"),
     "rolling_bp_save_pct_diff": ("player_rolling_bp_save_pct", "opponent_rolling_bp_save_pct"),
     "rolling_return_won_pct_diff": ("player_rolling_return_won_pct", "opponent_rolling_return_won_pct"),
+    "market_prob_diff": ("player_market_prob", "opponent_market_prob"),
 }
 
 DEFAULT_DAYS_SINCE_LAST_MATCH = 365
 DEFAULT_ELO_RATING = 1500.0
 ELO_K_FACTOR = 32.0
+
+FATIGUE_WINDOW_DAYS = 14
+
+ELO_K_FACTOR_BY_TOURNEY_LEVEL = {
+    "G": 40.0,  # Grand Slam (best of 5, highest-stakes signal)
+    "M": 32.0,  # Masters 1000
+    "F": 32.0,  # Tour Finals
+    "O": 32.0,  # Olympics
+    "A": 24.0,  # Regular tour-level events
+    "D": 20.0,  # Davis Cup (team context, weaker individual-form signal)
+}
 
 SERVE_STATS_WINDOW = 20
 
@@ -268,7 +292,10 @@ def build_player_rows(
 ) -> pd.DataFrame:
     """Build player/opponent rows from winner or loser perspective."""
 
-    rows = matches[CONTEXT_COLUMNS].copy()
+    available_context_columns = [
+        column for column in CONTEXT_COLUMNS if column in matches.columns
+    ]
+    rows = matches[available_context_columns].copy()
 
     optional_columns = [
         column for column in ADVANCED_PLAYER_COLUMNS
@@ -344,13 +371,38 @@ def calculate_elo_win_probability(player_elo: float, opponent_elo: float) -> flo
     return float(1 / (1 + 10 ** ((opponent_elo - player_elo) / 400)))
 
 
+def get_elo_k_factor(tourney_level: str) -> float:
+    """Look up the Elo K-factor for a tournament level, weighting higher-stakes events more."""
+    return ELO_K_FACTOR_BY_TOURNEY_LEVEL.get(tourney_level, ELO_K_FACTOR)
+
+
 def update_elo_rating(
     current_elo: float,
     expected_score: float,
     actual_score: int,
+    k_factor: float = ELO_K_FACTOR,
 ) -> float:
     """Update an Elo rating after a match result."""
-    return float(current_elo + ELO_K_FACTOR * (actual_score - expected_score))
+    return float(current_elo + k_factor * (actual_score - expected_score))
+
+
+def count_recent_matches(
+    current_date: pd.Timestamp,
+    previous_dates: list[pd.Timestamp],
+    window_days: int = FATIGUE_WINDOW_DAYS,
+) -> int:
+    """Count how many prior matches a player played within the trailing window.
+
+    previous_dates must be chronologically sorted (ascending); iterates from the
+    most recent entry backward and stops at the first date outside the window.
+    """
+    count = 0
+    for played_date in reversed(previous_dates):
+        if (current_date - played_date).days <= window_days:
+            count += 1
+        else:
+            break
+    return count
 
 
 def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
@@ -364,7 +416,9 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
     player_results: dict[int, list[int]] = {}
     player_surface_results: dict[int, dict[str, list[int]]] = {}
     player_last_match_dates: dict[int, pd.Timestamp] = {}
+    player_match_dates: dict[int, list[pd.Timestamp]] = {}
     player_h2h_results: dict[tuple[int, int], list[int]] = {}
+    player_h2h_surface_results: dict[tuple[int, int, str], list[int]] = {}
     player_elo_ratings: dict[int, float] = {}
     player_surface_elo_ratings: dict[int, dict[str, float]] = {}
 
@@ -374,8 +428,10 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
         features[f"{prefix}_surface_win_rate"] = 0.5
         features[f"{prefix}_days_since_last_match"] = DEFAULT_DAYS_SINCE_LAST_MATCH
         features[f"{prefix}_h2h_win_rate"] = 0.5
+        features[f"{prefix}_h2h_surface_win_rate"] = 0.5
         features[f"{prefix}_matches_played"] = 0
         features[f"{prefix}_surface_matches_played"] = 0
+        features[f"{prefix}_matches_last_14_days"] = 0
         features[f"{prefix}_elo_rating"] = DEFAULT_ELO_RATING
         features[f"{prefix}_elo_win_probability"] = 0.5
         features[f"{prefix}_surface_elo_rating"] = DEFAULT_ELO_RATING
@@ -390,6 +446,7 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
             winner_id = int(match["winner_id"])
             loser_id = int(match["loser_id"])
             surface = str(match["surface"])
+            k_factor = get_elo_k_factor(str(match["tourney_level"]))
 
             winner_results = player_results.get(winner_id, [])
             loser_results = player_results.get(loser_id, [])
@@ -405,10 +462,22 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
             loser_previous_date = player_last_match_dates.get(loser_id)
             winner_h2h_results = player_h2h_results.get((winner_id, loser_id), [])
             loser_h2h_results = player_h2h_results.get((loser_id, winner_id), [])
+            winner_h2h_surface_results = player_h2h_surface_results.get(
+                (winner_id, loser_id, surface), []
+            )
+            loser_h2h_surface_results = player_h2h_surface_results.get(
+                (loser_id, winner_id, surface), []
+            )
             winner_matches_played = len(winner_results)
             loser_matches_played = len(loser_results)
             winner_surface_matches_played = len(winner_surface_results)
             loser_surface_matches_played = len(loser_surface_results)
+            winner_matches_last_14_days = count_recent_matches(
+                match_date, player_match_dates.get(winner_id, [])
+            )
+            loser_matches_last_14_days = count_recent_matches(
+                match_date, player_match_dates.get(loser_id, [])
+            )
             winner_elo = player_elo_ratings.get(winner_id, DEFAULT_ELO_RATING)
             loser_elo = player_elo_ratings.get(loser_id, DEFAULT_ELO_RATING)
             winner_elo_win_probability = calculate_elo_win_probability(
@@ -476,6 +545,20 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 loser_h2h_results,
                 window=len(loser_h2h_results),
             )
+            features.at[
+                row_index,
+                "winner_h2h_surface_win_rate",
+            ] = calculate_prior_win_rate(
+                winner_h2h_surface_results,
+                window=len(winner_h2h_surface_results),
+            )
+            features.at[
+                row_index,
+                "loser_h2h_surface_win_rate",
+            ] = calculate_prior_win_rate(
+                loser_h2h_surface_results,
+                window=len(loser_h2h_surface_results),
+            )
             features.at[row_index, "winner_matches_played"] = winner_matches_played
             features.at[row_index, "loser_matches_played"] = loser_matches_played
             features.at[
@@ -486,6 +569,14 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 row_index,
                 "loser_surface_matches_played",
             ] = loser_surface_matches_played
+            features.at[
+                row_index,
+                "winner_matches_last_14_days",
+            ] = winner_matches_last_14_days
+            features.at[
+                row_index,
+                "loser_matches_last_14_days",
+            ] = loser_matches_last_14_days
             features.at[row_index, "winner_elo_rating"] = winner_elo
             features.at[row_index, "loser_elo_rating"] = loser_elo
             features.at[
@@ -519,6 +610,7 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                         winner_elo_win_probability,
                         winner_surface_elo,
                         winner_surface_elo_win_probability,
+                        k_factor,
                     ),
                     (
                         loser_id,
@@ -530,6 +622,7 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                         loser_elo_win_probability,
                         loser_surface_elo,
                         loser_surface_elo_win_probability,
+                        k_factor,
                     ),
                 ]
             )
@@ -544,6 +637,7 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
             expected_score,
             prior_surface_elo,
             expected_surface_score,
+            k_factor,
         ) in pending_updates:
             player_results.setdefault(player_id, []).append(result)
             player_surface_results.setdefault(player_id, {}).setdefault(
@@ -551,11 +645,16 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 [],
             ).append(result)
             player_last_match_dates[player_id] = played_date
+            player_match_dates.setdefault(player_id, []).append(played_date)
             player_h2h_results.setdefault((player_id, opponent_id), []).append(result)
+            player_h2h_surface_results.setdefault(
+                (player_id, opponent_id, surface), []
+            ).append(result)
             player_elo_ratings[player_id] = update_elo_rating(
                 prior_elo,
                 expected_score,
                 result,
+                k_factor,
             )
             player_surface_elo_ratings.setdefault(player_id, {})[
                 surface
@@ -563,6 +662,7 @@ def add_rolling_form_features(matches: pd.DataFrame) -> pd.DataFrame:
                 prior_surface_elo,
                 expected_surface_score,
                 result,
+                k_factor,
             )
 
     return features
