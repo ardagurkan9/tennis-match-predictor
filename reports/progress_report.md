@@ -1,120 +1,148 @@
 # Tennis Match Predictor — Progress Report
 
-**Date:** 2026-06-07
+**Last updated:** 2026-07-13  
+**Latest reviewed commit:** `3498955` — Add market odds as a leakage-free prediction feature
 
 ---
 
-## Completed
+## Current Status
 
-### 1. Data Ingestion (`src/ingest.py`)
-Raw ATP match CSV files are read from `data/raw/` and combined into a single DataFrame.
+The project has a working, time-aware preprocessing and modeling pipeline for ATP matches from 2000 through 2025. The base feature set and four baseline ML models are complete. The advanced pipeline now uses the full 2000–2025 history to warm up rolling features, keeps 2015–2025 rows for modeling, and includes historical pre-match market odds.
 
-### 2. Data Cleaning (`src/clean.py`)
-- Tournament dates converted to datetime; `tourney_year`, `tourney_month`, `tourney_day` columns added
-- Surface values normalized
-- Duplicate matches removed
-- Post-match leakage columns removed (`score`, `minutes`, `w_ace`, `l_ace`, etc. — 19 columns)
-- Cleaned data saved to: `data/processed/cleaned_matches.parquet`
+The latest generated advanced dataset contains **61,228 player-perspective rows (30,614 matches)** and **144 columns**. Historical market odds were matched to **26,929 matches (87.96%)**.
 
-### 3. Feature Engineering (`src/features.py`)
-- Each match expanded into two rows: winner perspective (`target_win=1`) and loser perspective (`target_win=0`)
-- Difference features created: `rank_diff`, `rank_points_diff`, `age_diff`, `height_diff`, `seed_diff`
-- Matchup features added: `hand_matchup`, `ioc_matchup`, `same_ioc`
-- Categorical columns one-hot encoded: `surface`, `tourney_level`, `round`, `player_hand`, `opponent_hand`
-- Feature dataset saved to: `data/features/match_features.parquet`
-- Advanced rolling form feature dataset saved separately to: `data/features/advanced/match_features.parquet`
-- Advanced split files saved to: `data/features/advanced/train.csv`, `validation.csv`, `test.csv`
+## Completed Work
 
-### 3.1 Advanced Rolling Form Features (`src/features.py`)
-- Added prior last 5 match win rate for player and opponent
-- Added prior last 10 match win rate for player and opponent
-- Added `last5_win_rate_diff` and `last10_win_rate_diff`
-- Same `tourney_date` matches are not used as prior history to prevent leakage
+### 1. Data Ingestion and Cleaning
 
-### 4. Train / Validation / Test Split (`src/split.py`)
-Year-based split applied to prevent temporal leakage:
-- Train: 2015–2023
-- Validation: 2024
-- Test: 2025
+- Raw ATP CSV files from 2000–2025 are loaded and combined by `src/ingest.py`.
+- Tournament dates and surface values are normalized and duplicate matches are removed.
+- High-missing entry columns are dropped and missing seed, height, rank, ranking-point, age, hand, and surface values are handled.
+- Post-match columns such as score, duration, aces, double faults, serve points, and break-point statistics are removed from the final model input.
+- The standard cleaned dataset is saved to `data/processed/cleaned_matches.parquet`.
 
-### 5. Rank-Based Baseline (`src/evaluate.py`)
-- Rule: the player with the better ATP ranking is predicted to win
-- Validation accuracy: **0.6348**
-- Test accuracy: **0.6368**
+### 2. Base Feature Engineering
 
-### 6. Logistic Regression (`src/train.py`)
-- `StandardScaler → LogisticRegression(max_iter=1000)` pipeline built
-- Model trained and saved to: `models/logistic_regression.pkl`
-- Validation accuracy: **0.6364**
-- Test accuracy: **0.6407**
+- Each match is expanded into two neutral player/opponent rows, with `target_win=1` and `target_win=0`.
+- Rank, ranking-point, age, height, and seed difference features are created.
+- Handedness, nationality, surface, tournament level, and round context are encoded.
+- Base features are saved to `data/features/match_features.parquet` and split CSV files.
 
-### 7. Random Forest (`src/train.py`)
-- `RandomForestClassifier(n_estimators=300, min_samples_leaf=5, max_features="sqrt")` pipeline built
-- Model trained and saved to: `models/random_forest.pkl`
-- Validation accuracy: **0.6343**
-- Validation ROC-AUC: **0.7031**
-- Test accuracy: **0.6459**
-- Test ROC-AUC: **0.7051**
+### 3. Leakage-Free Advanced Features
 
-### 8. XGBoost (`src/train.py`)
-- `XGBClassifier(n_estimators=300, max_depth=4, learning_rate=0.05)` pipeline built
-- Model trained and saved to: `models/xgboost.pkl`
-- Validation accuracy: **0.6402**
-- Validation ROC-AUC: **0.7086**
-- Test accuracy: **0.6508**
-- Test ROC-AUC: **0.7150**
+The advanced pipeline in `src/build_advanced_features.py` and `src/features.py` computes features chronologically and only applies match results after all matches on the same tournament date have been processed.
 
-### 9. LightGBM (`src/train.py`)
-- `LGBMClassifier(n_estimators=300, max_depth=4, learning_rate=0.05)` pipeline built
-- Model trained and saved to: `models/lightgbm.pkl`
-- Validation accuracy: **0.6394**
-- Validation ROC-AUC: **0.7076**
-- Test accuracy: **0.6529**
-- Test ROC-AUC: **0.7156**
+Implemented advanced features:
 
-### 10. Advanced LightGBM With All Advanced Features
-- Model trained on `data/features/advanced/train.csv`
-- Model saved separately to: `models/advanced/lightgbm.pkl`
-- Validation accuracy: **0.6538**
-- Validation ROC-AUC: **0.7242**
-- Test accuracy: **0.6669**
-- Test ROC-AUC: **0.7267**
+- Prior last-5 and last-10 match win rates
+- Surface-specific historical win rate
+- Days since the previous match
+- Overall head-to-head win rate
+- Surface-specific head-to-head win rate
+- Career and surface match counts
+- Number of matches played in the preceding 14 days (fatigue/load proxy)
+- Overall Elo and surface Elo ratings and expected win probabilities
+- Tournament-level Elo K-factors (`G=40`, `M/F/O=32`, `A=24`, `D=20`, default `32`)
+- Leakage-free rolling serve/return statistics over the preceding 20 matches
+- Player/opponent values and their difference features
 
----
+The full 2000–2025 history is used to warm up these rolling statistics. Only rows from 2015 onward are retained after feature generation, avoiding cold-starting all player histories at the beginning of the training period.
 
-## Not Yet Done
+### 4. Historical Market Odds
+
+- Historical Excel odds files for 2015–2025 are stored in `data/raw/odds/`.
+- `src/odds.py` loads the files using the newly added `openpyxl` and `xlrd` dependencies.
+- ATP player names are matched to odds records using normalized surname tokens and first initials, including fallback handling for compound or differently transliterated surnames.
+- Matching searches from the ATP tournament date through the following 21 days.
+- Odds source priority is Pinnacle (`PSW`/`PSL`), market average (`AvgW`/`AvgL`), then Bet365 (`B365W`/`B365L`).
+- Bookmaker margin is removed by normalizing the two implied probabilities.
+- The resulting features are `player_market_prob`, `opponent_market_prob`, `market_prob_diff`, and `market_odds_available`.
+- Unmatched matches receive neutral probabilities of `0.5`, while `market_odds_available=0` preserves the missingness signal.
+
+Latest generated-data coverage:
+
+| Item | Value |
+|---|---:|
+| Advanced rows | 61,228 |
+| Unique matches | 30,614 |
+| Odds-matched matches | 26,929 |
+| Odds coverage | 87.96% |
+
+### 5. Time-Based Dataset Split
+
+Random splitting is not used. The current advanced split is:
+
+| Split | Years | Rows |
+|---|---|---:|
+| Train | 2015–2023 | 49,192 |
+| Validation | 2024 | 6,314 |
+| Test | 2025 | 5,722 |
+
+Advanced outputs are saved under `data/features/advanced/`.
+
+### 6. Base Benchmarks
+
+| Model | Validation Accuracy | Test Accuracy | Test ROC-AUC |
+|---|---:|---:|---:|
+| Rank baseline | 0.6348 | 0.6368 | — |
+| Logistic Regression | 0.6364 | 0.6407 | — |
+| Random Forest | 0.6343 | 0.6459 | 0.7051 |
+| XGBoost | 0.6402 | 0.6508 | 0.7150 |
+| LightGBM | 0.6394 | 0.6529 | 0.7156 |
+
+### 7. Latest Advanced Model Results
+
+The saved models under `models/advanced/` were verified against the current advanced validation and test files. All four standard advanced models use the new market features.
+
+| Model | Val. Accuracy | Val. ROC-AUC | Val. Log Loss | Test Accuracy | Test ROC-AUC | Test Log Loss |
+|---|---:|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.6737 | 0.7404 | 0.5980 | 0.6714 | 0.7248 | 0.6135 |
+| Random Forest | **0.6861** | 0.7498 | 0.5917 | 0.6776 | 0.7329 | 0.6042 |
+| XGBoost | 0.6790 | **0.7523** | 0.5856 | 0.6730 | 0.7379 | 0.5984 |
+| LightGBM | 0.6798 | 0.7521 | **0.5853** | **0.6786** | **0.7396** | **0.5969** |
+
+The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 test ROC-AUC. The current saved LightGBM reaches **0.6786 test accuracy** and **0.7396 test ROC-AUC**.
+
+## Remaining Work
 
 ### Evaluation Report
-- `reports/metrics.json` not generated — logistic regression accuracy, ROC-AUC, and log loss results not yet saved
-- `reports/confusion_matrix.png` not generated
 
-### Prediction Script (`src/predict.py`)
-- File exists but content not implemented
-- Goal: given two player names and a surface, return win probabilities
+- `reports/metrics.json` is not generated.
+- `reports/confusion_matrix.png` is not generated.
+- Metrics are currently printed or recorded manually rather than persisted by a reproducible evaluation command.
+- Precision, recall, and calibration analysis are not yet included in the implemented evaluator.
 
----
+### Prediction Interface
+
+- `src/predict.py` still contains only a module docstring.
+- A feature-building path for a future player-vs-player match is still required before CLI or API inference can be implemented reliably.
+
+### Reproducibility and Validation
+
+- There is no automated test suite for name matching, chronological feature updates, odds matching, or feature symmetry.
+- The advanced build is run separately; `main.py` currently runs only the standard ingestion/cleaning check.
+- Odds matching should be audited for false matches caused by the 21-day date window, surname-only fallback, and cross-source tournament/date differences.
+- A controlled ablation should compare the same advanced model with and without market odds to quantify their incremental value.
 
 ## Summary
 
 | Step | Status |
 |---|---|
-| Data Ingestion | Done |
-| Data Cleaning | Done |
-| Leakage Prevention | Done |
-| Feature Engineering | Done |
-| Train/Val/Test Split | Done |
-| Rank-Based Baseline | Done (~63.5%) |
-| Logistic Regression | Done (test accuracy: 0.6407) |
-| Random Forest | Done (test accuracy: 0.6459) |
-| XGBoost | Done (test accuracy: 0.6508) |
-| LightGBM | Done (test accuracy: 0.6529) |
-| Rolling Form Features | Done (saved separately) |
-| Surface-Specific Features | Done (saved separately) |
-| Days Since Last Match | Done (saved separately) |
-| Head-to-Head Features | Done (saved separately) |
-| Elo Features | Done (saved separately) |
-| Surface Elo Features | Done (saved separately) |
-| Advanced LightGBM | Done (test accuracy: 0.6669, ROC-AUC: 0.7267) |
-| Evaluation Report | Missing |
-| Prediction Script | Missing |
-| Advanced Features | Done |
+| ATP data ingestion (2000–2025) | Done |
+| Cleaning and leakage-column removal | Done |
+| Base feature engineering | Done |
+| Time-based split | Done |
+| Base model benchmarks | Done |
+| Rolling form and surface form | Done |
+| Days since last match and 14-day match load | Done |
+| Overall and surface-specific H2H | Done |
+| Elo, surface Elo, and tournament-weighted K-factor | Done |
+| Rolling serve/return features | Done |
+| Historical odds ingestion (2015–2025) | Done |
+| Vig-free market probability features | Done |
+| Full-history feature warm-up | Done |
+| Advanced dataset generation | Done |
+| Advanced model training | Done |
+| Persistent evaluation report | Pending |
+| Prediction CLI/API | Pending |
+| Automated tests and odds-match audit | Pending |
