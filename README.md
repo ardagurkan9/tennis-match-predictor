@@ -138,6 +138,28 @@ python -m src.evaluate
 python -m src.evaluate --dataset advanced
 ```
 
+Run the market-feature ablation with expanding-window cross-validation:
+
+```bash
+python -m src.ablation
+```
+
+This compares rank baseline, market baseline, market-only LightGBM, tennis-only
+LightGBM, and the full model. The 2025 result is labeled as a retrospective
+benchmark and is not used for experiment selection.
+
+Run the automated leakage regression tests:
+
+```bash
+python -m pytest
+```
+
+Generate persistent model metrics and diagnostic plots:
+
+```bash
+python -m src.report
+```
+
 ## Outputs
 
 ```text
@@ -152,12 +174,20 @@ data/features/advanced/validation.csv
 data/features/advanced/test.csv
 models/*.pkl
 models/advanced/*.pkl
+reports/ablation_results.csv
+reports/ablation_metrics.json
+reports/model_metrics.csv
+reports/model_metrics.json
+reports/confusion_matrix.png
+reports/calibration_curve.png
 ```
 
 ## Current Status
 
 The base and advanced modeling pipelines are complete. The current best advanced LightGBM result is approximately 67.86% test accuracy and 73.96% test ROC-AUC.
 
-The prediction interface, persistent evaluation reports and automated tests are not implemented yet.
+The prediction interface is not implemented yet. Automated leakage tests and
+persistent ablation reports are available; broader odds-matching, feature-symmetry,
+and end-to-end test coverage is still planned.
 
 For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).

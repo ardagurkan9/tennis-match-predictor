@@ -21,9 +21,26 @@ The latest generated advanced dataset contains **61,228 player-perspective rows 
 - An Elo-adjusted last-5/last-10 form experiment rewarded results relative to the opponent-strength expectation. Validation accuracy increased slightly (`0.6798` to `0.6804`), but test accuracy fell (`0.6786` to `0.6755`) and both ROC-AUC and log loss worsened, so the feature was not retained.
 - An average-odds-first market probability experiment was tested based on the thesis finding that bookmaker-average implied probability was its strongest feature. LightGBM test accuracy fell from `0.6786` to `0.6756`, while XGBoost changed from `0.6730` to `0.6735`; the LightGBM probability metrics also worsened, so Pinnacle-first priority was retained.
 - A thesis-inspired XGBoost search used five expanding-window validation folds (2020–2024) and selected `n_estimators=100`, `max_depth=3`, `min_child_weight=1`, `subsample=0.8`, `learning_rate=0.05`, and no L1/L2 regularization. After refitting on 2015–2024, it reached `0.6772` test accuracy, `0.7392` ROC-AUC, `0.5993` log loss, and `0.2068` Brier score on 2025. This improved XGBoost over its current parameters on the same training period (`0.6755` accuracy) but did not beat LightGBM, so no production model was replaced.
+- A reproducible market-feature ablation command now compares rank baseline, market baseline, market-only LightGBM, tennis-only LightGBM, and full LightGBM using 2020–2024 expanding-window cross-validation. The previously inspected 2025 set is explicitly labeled as a retrospective benchmark.
+- Automated leakage regression tests now cover post-match column removal, current-match serve-stat isolation, future-result isolation, same-day update isolation, and strict time-split boundaries.
+- A persistent evaluation command now reports all advanced models and baselines with accuracy, ROC-AUC, log loss, Brier score, precision, recall, confusion matrices, odds-availability slices, and LightGBM diagnostic plots.
 - The unused `data/predictions/` placeholder was removed because no persistent prediction-output workflow is implemented.
 
 ## Completed Work
+
+### Market Feature Ablation
+
+`python -m src.ablation` evaluates five fixed experiments over expanding-window validation years 2020–2024. Experiment decisions must use these CV summaries rather than the previously inspected 2025 benchmark.
+
+| Experiment | CV Accuracy | CV Accuracy Std. | CV Brier Score | 2025 Retrospective Accuracy |
+|---|---:|---:|---:|---:|
+| Rank baseline | 0.6359 | 0.0048 | 0.3641 | 0.6368 |
+| Market baseline | 0.6583 | 0.0053 | 0.2073 | 0.6510 |
+| Market-only LightGBM | 0.6578 | 0.0052 | 0.2079 | 0.6498 |
+| Tennis-only LightGBM | 0.6614 | 0.0033 | 0.2084 | 0.6596 |
+| Full LightGBM | **0.6838** | 0.0080 | **0.1994** | **0.6774** |
+
+The tennis-only model exceeds both market-only approaches, and combining tennis and market features produces the strongest result. This indicates that the full model learns additional tennis signal rather than merely reproducing bookmaker probabilities. Machine-readable results are saved to `reports/ablation_results.csv` and `reports/ablation_metrics.json`.
 
 ### 1. Data Ingestion and Cleaning
 
@@ -117,13 +134,6 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 
 ## Remaining Work
 
-### Evaluation Report
-
-- `reports/metrics.json` is not generated.
-- `reports/confusion_matrix.png` is not generated.
-- Metrics are currently printed or recorded manually rather than persisted by a reproducible evaluation command.
-- Precision, recall, and calibration analysis are not yet included in the implemented evaluator.
-
 ### Prediction Interface
 
 - `src/predict.py` still contains only a module docstring.
@@ -131,10 +141,10 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 
 ### Reproducibility and Validation
 
-- There is no automated test suite for name matching, chronological feature updates, odds matching, or feature symmetry.
-- The advanced build is run separately; `main.py` currently runs only the standard ingestion/cleaning check.
+- Leakage regression tests cover chronological future isolation and same-day update isolation. Name matching, odds matching, feature symmetry, and end-to-end pipeline tests are still missing.
+- `main.py advanced` runs the advanced dataset build; model training and reporting remain explicit separate commands.
 - Odds matching should be audited for false matches caused by the 21-day date window, surname-only fallback, and cross-source tournament/date differences.
-- A controlled ablation should compare the same advanced model with and without market odds to quantify their incremental value.
+- GitHub Actions is not yet configured to run the test suite automatically.
 
 ## Summary
 
@@ -155,6 +165,8 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 | Full-history feature warm-up                       | Done    |
 | Advanced dataset generation                        | Done    |
 | Advanced model training                            | Done    |
-| Persistent evaluation report                       | Pending |
+| Market-feature ablation report                     | Done    |
+| Persistent model evaluation report                 | Done    |
 | Prediction CLI/API                                 | Pending |
-| Automated tests and odds-match audit               | Pending |
+| Leakage regression tests                           | Done |
+| Odds-match audit and broader automated tests       | Pending |

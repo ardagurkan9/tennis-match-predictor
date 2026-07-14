@@ -10,3 +10,4 @@ notebook
 ipykernel
 openpyxl
 xlrd
+pytest

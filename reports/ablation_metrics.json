@@ -1,0 +1,296 @@
+{
+  "protocol": {
+    "selection_data": "expanding-window cross-validation only",
+    "cv_validation_years": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "retrospective_holdout_year": 2025,
+    "holdout_warning": "The 2025 holdout was inspected during earlier development and is reported only as a retrospective benchmark."
+  },
+  "market_features": [
+    "market_odds_available",
+    "market_prob_diff",
+    "opponent_market_prob",
+    "player_market_prob"
+  ],
+  "cv_folds": {
+    "rank_baseline": [
+      {
+        "validation_year": 2020,
+        "accuracy": 0.634404924760602,
+        "roc_auc": 0.634404924760602,
+        "log_loss": 13.177382172697072,
+        "brier_score": 0.3655950752393981
+      },
+      {
+        "validation_year": 2021,
+        "accuracy": 0.632638126600805,
+        "roc_auc": 0.632638126600805,
+        "log_loss": 13.24106403317732,
+        "brier_score": 0.367361873399195
+      },
+      {
+        "validation_year": 2022,
+        "accuracy": 0.6451834076105588,
+        "roc_auc": 0.6451834076105588,
+        "log_loss": 12.78888627279268,
+        "brier_score": 0.3548165923894412
+      },
+      {
+        "validation_year": 2023,
+        "accuracy": 0.6319490957803081,
+        "roc_auc": 0.6319490957803082,
+        "log_loss": 13.265899221245729,
+        "brier_score": 0.3680509042196919
+      },
+      {
+        "validation_year": 2024,
+        "accuracy": 0.6350966107063668,
+        "roc_auc": 0.6350966107063667,
+        "log_loss": 13.152451284213798,
+        "brier_score": 0.3649033892936332
+      }
+    ],
+    "market_baseline": [
+      {
+        "validation_year": 2020,
+        "accuracy": 0.6627906976744186,
+        "roc_auc": 0.7392993687787843,
+        "log_loss": 0.5939920683683597,
+        "brier_score": 0.20527635130660296
+      },
+      {
+        "validation_year": 2021,
+        "accuracy": 0.6650201244054152,
+        "roc_auc": 0.7336270560691922,
+        "log_loss": 0.5997594681859941,
+        "brier_score": 0.2078304037908066
+      },
+      {
+        "validation_year": 2022,
+        "accuracy": 0.6590675351388413,
+        "roc_auc": 0.740481160348901,
+        "log_loss": 0.5940888282164262,
+        "brier_score": 0.20499099625743855
+      },
+      {
+        "validation_year": 2023,
+        "accuracy": 0.6508707300736771,
+        "roc_auc": 0.7260506049889437,
+        "log_loss": 0.6017996805386449,
+        "brier_score": 0.20918618452780183
+      },
+      {
+        "validation_year": 2024,
+        "accuracy": 0.6536268609439341,
+        "roc_auc": 0.7272967574156569,
+        "log_loss": 0.6036519848788652,
+        "brier_score": 0.20926285618802987
+      }
+    ],
+    "market_only_lightgbm": [
+      {
+        "validation_year": 2020,
+        "accuracy": 0.664500683994528,
+        "roc_auc": 0.7391859155140438,
+        "log_loss": 0.5931401920637682,
+        "brier_score": 0.20520692471789878
+      },
+      {
+        "validation_year": 2021,
+        "accuracy": 0.6587998536406879,
+        "roc_auc": 0.7281775413965104,
+        "log_loss": 0.6054191660957594,
+        "brier_score": 0.2098200644233331
+      },
+      {
+        "validation_year": 2022,
+        "accuracy": 0.6621528968117929,
+        "roc_auc": 0.7404155231076583,
+        "log_loss": 0.5966528425856831,
+        "brier_score": 0.20536790200845784
+      },
+      {
+        "validation_year": 2023,
+        "accuracy": 0.6510381781647689,
+        "roc_auc": 0.7246187724002479,
+        "log_loss": 0.6027214219917132,
+        "brier_score": 0.20958378890716228
+      },
+      {
+        "validation_year": 2024,
+        "accuracy": 0.6526765917009819,
+        "roc_auc": 0.7255840955169586,
+        "log_loss": 0.604121294302015,
+        "brier_score": 0.20960684208191174
+      }
+    ],
+    "tennis_only_lightgbm": [
+      {
+        "validation_year": 2020,
+        "accuracy": 0.6614227086183311,
+        "roc_auc": 0.7441500221760196,
+        "log_loss": 0.5903212525800581,
+        "brier_score": 0.20417039930659642
+      },
+      {
+        "validation_year": 2021,
+        "accuracy": 0.6635565312843029,
+        "roc_auc": 0.7269232720811848,
+        "log_loss": 0.6066001046634507,
+        "brier_score": 0.21057334722878662
+      },
+      {
+        "validation_year": 2022,
+        "accuracy": 0.6662667123757285,
+        "roc_auc": 0.7407176189511933,
+        "log_loss": 0.595667803421731,
+        "brier_score": 0.20560153557001162
+      },
+      {
+        "validation_year": 2023,
+        "accuracy": 0.6567314132618888,
+        "roc_auc": 0.7231443768171988,
+        "log_loss": 0.6085070859445272,
+        "brier_score": 0.2115975112718981
+      },
+      {
+        "validation_year": 2024,
+        "accuracy": 0.6591700981944885,
+        "roc_auc": 0.7275718247928666,
+        "log_loss": 0.6062507739402089,
+        "brier_score": 0.21022970293061463
+      }
+    ],
+    "full_lightgbm": [
+      {
+        "validation_year": 2020,
+        "accuracy": 0.6973324213406292,
+        "roc_auc": 0.7739468262092482,
+        "log_loss": 0.5636998974735424,
+        "brier_score": 0.1927975222269461
+      },
+      {
+        "validation_year": 2021,
+        "accuracy": 0.6871569703622393,
+        "roc_auc": 0.7532550286914859,
+        "log_loss": 0.5845865534148009,
+        "brier_score": 0.20119514791957172
+      },
+      {
+        "validation_year": 2022,
+        "accuracy": 0.6810078848131642,
+        "roc_auc": 0.7620362658391713,
+        "log_loss": 0.5782604273070064,
+        "brier_score": 0.19810336425240707
+      },
+      {
+        "validation_year": 2023,
+        "accuracy": 0.6738111185532485,
+        "roc_auc": 0.7452789283681068,
+        "log_loss": 0.58846339583545,
+        "brier_score": 0.20348348401171318
+      },
+      {
+        "validation_year": 2024,
+        "accuracy": 0.6797592651251188,
+        "roc_auc": 0.7520807645578769,
+        "log_loss": 0.5853214512989836,
+        "brier_score": 0.2013292740060731
+      }
+    ]
+  },
+  "cv_summary": {
+    "rank_baseline": {
+      "fold_count": 5.0,
+      "accuracy_mean": 0.6358544330917282,
+      "accuracy_std": 0.004802112487276298,
+      "roc_auc_mean": 0.6358544330917282,
+      "roc_auc_std": 0.004802112487276284,
+      "log_loss_mean": 13.12513659682532,
+      "log_loss_std": 0.17308567802693806,
+      "brier_score_mean": 0.3641455669082719,
+      "brier_score_std": 0.004802112487276302
+    },
+    "market_baseline": {
+      "fold_count": 5.0,
+      "accuracy_mean": 0.6582751896472573,
+      "accuracy_std": 0.005346863572677354,
+      "roc_auc_mean": 0.7333509895202956,
+      "roc_auc_std": 0.005937139130419193,
+      "log_loss_mean": 0.598658406037658,
+      "log_loss_std": 0.003966649006317721,
+      "brier_score_mean": 0.20730935841413595,
+      "brier_score_std": 0.001850299385882338
+    },
+    "market_only_lightgbm": {
+      "fold_count": 5.0,
+      "accuracy_mean": 0.6578336408625519,
+      "accuracy_std": 0.005230917176616853,
+      "roc_auc_mean": 0.7315963695870839,
+      "roc_auc_std": 0.006810306371810271,
+      "log_loss_mean": 0.6004109834077879,
+      "log_loss_std": 0.004715388773474584,
+      "brier_score_mean": 0.20791710442775274,
+      "brier_score_std": 0.002149316834382948
+    },
+    "tennis_only_lightgbm": {
+      "fold_count": 5.0,
+      "accuracy_mean": 0.661429492746948,
+      "accuracy_std": 0.0033196339344112027,
+      "roc_auc_mean": 0.7325014229636926,
+      "roc_auc_std": 0.008320658124161743,
+      "log_loss_mean": 0.6014694041099953,
+      "log_loss_std": 0.007164557269044822,
+      "brier_score_mean": 0.20843449926158147,
+      "brier_score_std": 0.0029668267061421566
+    },
+    "full_lightgbm": {
+      "fold_count": 5.0,
+      "accuracy_mean": 0.6838135320388801,
+      "accuracy_std": 0.00797867106573252,
+      "roc_auc_mean": 0.7573195627331778,
+      "roc_auc_std": 0.00987578349401898,
+      "log_loss_mean": 0.5800663450659567,
+      "log_loss_std": 0.008828146265328216,
+      "brier_score_mean": 0.19938175848334222,
+      "brier_score_std": 0.003711921582106117
+    }
+  },
+  "retrospective_holdout": {
+    "rank_baseline": {
+      "accuracy": 0.6368402656413842,
+      "roc_auc": 0.6368402656413841,
+      "log_loss": 13.089603590105808,
+      "brier_score": 0.36315973435861587
+    },
+    "market_baseline": {
+      "accuracy": 0.6509961551904928,
+      "roc_auc": 0.7171714463000292,
+      "log_loss": 0.6131043780135031,
+      "brier_score": 0.2134084951727722
+    },
+    "market_only_lightgbm": {
+      "accuracy": 0.6497728067109402,
+      "roc_auc": 0.7163373922659845,
+      "log_loss": 0.615087921526735,
+      "brier_score": 0.21380965053460324
+    },
+    "tennis_only_lightgbm": {
+      "accuracy": 0.659559594547361,
+      "roc_auc": 0.7214968111818706,
+      "log_loss": 0.612037978018126,
+      "brier_score": 0.21281375313173626
+    },
+    "full_lightgbm": {
+      "accuracy": 0.6773855295351275,
+      "roc_auc": 0.7395145529417845,
+      "log_loss": 0.5970040765931082,
+      "brier_score": 0.20643010383028532
+    }
+  }
+}

@@ -28,3 +28,9 @@ models/*
 reports/*
 !reports/.gitkeep
 !reports/progress_report.md
+!reports/ablation_results.csv
+!reports/ablation_metrics.json
+!reports/model_metrics.csv
+!reports/model_metrics.json
+!reports/confusion_matrix.png
+!reports/calibration_curve.png
