@@ -1,18 +1,54 @@
 # Tennis Match Predictor
 
-This project is an end-to-end machine learning pipeline for predicting professional tennis match outcomes using historical ATP match data.
+An end-to-end machine learning pipeline for predicting professional ATP tennis match outcomes using historical match data and pre-match betting odds.
 
-The goal is not only to train a model, but also to build a clean, reproducible, leakage-free data pipeline. Raw match data is ingested, cleaned, transformed into model-ready features, split by time, trained with multiple models, and evaluated against a simple baseline.
-
-## Project Objective
-
-The project predicts whether `player_1` wins a tennis match against `player_2`.
-
-This is a binary classification problem:
+The project focuses on reproducible, time-aware and leakage-free feature engineering. Each match is represented from both players' perspectives, and the model predicts whether the selected player wins:
 
 ```text
-target = 1 if player_1 wins
-target = 0 if player_2 wins
+target_win = 1 if player wins
+target_win = 0 if opponent wins
+```
+
+## Key Features
+
+* ATP match history from 2000 through 2025
+* Time-based train, validation and test splits
+* Rolling recent-form and surface-form statistics
+* Overall and surface-specific head-to-head features
+* Elo and surface Elo ratings
+* Rolling serve and return statistics
+* Player workload and rest features
+* Vig-free pre-match market probabilities
+* Logistic Regression, Random Forest, XGBoost and LightGBM models
+
+All chronological features use only information available before the predicted match. Current-match scores and serve statistics are excluded from model inputs.
+
+## Pipeline Overview
+
+`main.py` is the central entry point for both data pipelines. Its default `clean` mode runs the ingestion and cleaning check:
+
+```text
+main.py clean
+└── ingest.py → clean.py → cleaned_matches.parquet
+```
+
+Its `advanced` mode delegates to the advanced dataset builder:
+
+```text
+main.py advanced → build_advanced_features.py
+├── ingest.py
+├── features.py (rolling serve/return history)
+├── odds.py (pre-match market probabilities)
+├── clean.py
+├── features.py (form, H2H, workload, Elo and matchup features)
+└── split.py → advanced train/validation/test files
+```
+
+Model training and evaluation remain separate steps:
+
+```text
+train.py → trained model files
+evaluate.py → rank-baseline metrics
 ```
 
 ## Project Structure
@@ -21,17 +57,18 @@ target = 0 if player_2 wins
 tennis-match-predictor/
 ├── data/
 │   ├── raw/
+│   │   └── odds/
 │   ├── processed/
-│   ├── features/
-│   └── predictions/
+│   └── features/
+│       └── advanced/
 ├── models/
 ├── reports/
-├── notebooks/
 ├── src/
-│   ├── config.py
 │   ├── ingest.py
 │   ├── clean.py
+│   ├── odds.py
 │   ├── features.py
+│   ├── build_advanced_features.py
 │   ├── split.py
 │   ├── train.py
 │   ├── evaluate.py
@@ -41,450 +78,86 @@ tennis-match-predictor/
 └── README.md
 ```
 
-## Pipeline Overview
+## Data Split
 
-The pipeline follows this order:
+Random splitting is not used because tennis data is time-dependent.
 
-```text
-ingest.py → clean.py → features.py → split.py → train.py → evaluate.py
-```
+| Split | Years |
+|---|---|
+| Train | 2015–2023 |
+| Validation | 2024 |
+| Test | 2025 |
 
-The full pipeline can be run with:
+The advanced pipeline uses matches from 2000 onward to warm up player histories before retaining rows from 2015 onward for modeling.
 
-```bash
-python main.py
-```
+## Installation
 
-## 1. Data Ingestion
-
-Raw ATP match CSV files are stored in:
-
-```text
-data/raw/
-```
-
-Example raw files:
-
-```text
-atp_matches_2015.csv
-atp_matches_2016.csv
-atp_matches_2017.csv
-...
-```
-
-The ingestion step reads all raw CSV files and combines them into a single dataset.
-
-Raw data is never overwritten. This keeps the original dataset unchanged and reproducible.
-
-Responsible file:
-
-```text
-src/ingest.py
-```
-
-## 2. Data Cleaning
-
-The cleaning step prepares the raw match data for feature engineering.
-
-Main cleaning tasks:
-
-* Convert tournament dates to datetime format
-* Normalize surface values
-* Remove duplicate matches
-* Remove post-match leakage columns
-* Check missing values
-* Keep useful pre-match player information for feature engineering
-
-Cleaned data is saved to:
-
-```text
-data/processed/cleaned_matches.parquet
-```
-
-Responsible file:
-
-```text
-src/clean.py
-```
-
-## Leakage Columns Removed
-
-The following columns are removed because they are only known after the match is played:
-
-```text
-score
-minutes
-w_ace
-w_df
-w_svpt
-w_1stIn
-w_1stWon
-w_2ndWon
-w_SvGms
-w_bpSaved
-w_bpFaced
-l_ace
-l_df
-l_svpt
-l_1stIn
-l_1stWon
-l_2ndWon
-l_SvGms
-l_bpSaved
-l_bpFaced
-```
-
-These columns would cause data leakage and create unrealistic model performance.
-
-## 3. Feature Engineering
-
-The original ATP dataset stores players as `winner` and `loser`. This format cannot be used directly for modeling because it already reveals the result.
-
-Therefore, the data is converted into a neutral format:
-
-```text
-player_1
-player_2
-target
-```
-
-The target column represents whether `player_1` won the match.
-
-Example features:
-
-```text
-player_1_rank
-player_2_rank
-rank_diff
-player_1_rank_points
-player_2_rank_points
-rank_points_diff
-player_1_age
-player_2_age
-age_diff
-player_1_height
-player_2_height
-height_diff
-player_1_hand
-player_2_hand
-hand_matchup
-surface
-tourney_level
-best_of
-round
-```
-
-Advanced features currently include:
-
-```text
-player_last5_win_rate
-opponent_last5_win_rate
-player_last10_win_rate
-opponent_last10_win_rate
-player_surface_win_rate
-opponent_surface_win_rate
-player_days_since_last_match
-opponent_days_since_last_match
-player_h2h_win_rate
-opponent_h2h_win_rate
-player_matches_played
-opponent_matches_played
-player_surface_matches_played
-opponent_surface_matches_played
-player_elo_rating
-opponent_elo_rating
-player_elo_win_probability
-opponent_elo_win_probability
-player_surface_elo_rating
-opponent_surface_elo_rating
-player_surface_elo_win_probability
-opponent_surface_elo_win_probability
-last5_win_rate_diff
-last10_win_rate_diff
-surface_win_rate_diff
-days_since_last_match_diff
-h2h_win_rate_diff
-matches_played_diff
-surface_matches_played_diff
-elo_rating_diff
-elo_win_probability_diff
-surface_elo_rating_diff
-surface_elo_win_probability_diff
-```
-
-Feature data is saved to:
-
-```text
-data/features/match_features.parquet
-```
-
-Advanced feature data is saved separately so the first version and improved
-version can be compared:
-
-```text
-data/features/advanced/match_features.parquet
-data/features/advanced/train.csv
-data/features/advanced/validation.csv
-data/features/advanced/test.csv
-```
-
-Responsible file:
-
-```text
-src/features.py
-```
-
-## Data Leakage Prevention
-
-Preventing data leakage is the most important part of this project.
-
-No feature should use information that would not be available before the match starts.
-
-All rolling player features were calculated using only matches prior to the prediction date to prevent data leakage.
-
-For example, if a match was played on `2023-06-10`, the feature engineering step must not use any match data after `2023-06-10`.
-
-## 4. Train / Validation / Test Split
-
-Random split is not used because tennis match data is time-dependent.
-
-The dataset is split by date to simulate real-world prediction:
-
-```text
-train: past years
-validation: following year
-test: final year
-```
-
-Example:
-
-```text
-train: 2015-2023
-validation: 2024
-test: 2025
-```
-
-Responsible file:
-
-```text
-src/split.py
-```
-
-## 5. Baseline Model
-
-Before training machine learning models, a baseline prediction is calculated.
-
-Baseline strategy:
-
-```text
-Predict the player with the better ranking as the winner.
-```
-
-This gives a simple benchmark. Any ML model should be compared against this baseline.
-
-If the trained model does not beat the baseline, this should be reported honestly.
-
-Responsible file:
-
-```text
-src/evaluate.py
-```
-
-Current rank-based baseline results:
-
-```text
-validation_baseline_accuracy: 0.6348
-test_baseline_accuracy: 0.6368
-```
-
-## 6. Model Training
-
-The project starts with simple and interpretable models before trying more complex models.
-
-Initial models:
-
-```text
-Logistic Regression
-Random Forest
-XGBoost
-LightGBM
-```
-
-The trained model is saved to:
-
-```text
-models/logistic_regression.pkl
-models/random_forest.pkl
-models/xgboost.pkl
-models/lightgbm.pkl
-```
-
-Responsible file:
-
-```text
-src/train.py
-```
-
-## 7. Evaluation
-
-The model is evaluated using multiple metrics.
-
-Reported metrics:
-
-```text
-accuracy
-ROC-AUC
-log loss
-precision
-recall
-confusion matrix
-baseline accuracy
-```
-
-Evaluation outputs are saved to:
-
-```text
-reports/metrics.json
-reports/confusion_matrix.png
-```
-
-Responsible file:
-
-```text
-src/evaluate.py
-```
-
-## 8. Prediction
-
-The prediction script loads the trained model and produces win probabilities for a new match.
-
-Example future usage:
-
-```bash
-python src/predict.py --player1 "Carlos Alcaraz" --player2 "Jannik Sinner" --surface "Clay"
-```
-
-Example output:
-
-```text
-Carlos Alcaraz win probability: 58.4%
-Jannik Sinner win probability: 41.6%
-```
-
-Responsible file:
-
-```text
-src/predict.py
-```
-
-## How to Run
-
-Install dependencies:
+Create and activate a virtual environment, then install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Place raw ATP match CSV files inside:
+Raw ATP CSV files belong in `data/raw/`. Historical odds workbooks belong in `data/raw/odds/`.
 
-```text
-data/raw/
-```
+## Usage
 
-Run the current preprocessing pipeline:
+Run the ingestion and cleaning check (the default mode):
 
 ```bash
 python main.py
+# equivalent to: python main.py clean
+```
+
+Build the advanced feature dataset and its time-based splits:
+
+```bash
+python main.py advanced
+```
+
+Create base dataset splits:
+
+```bash
+python -m src.split
+```
+
+Train model candidates using either dataset:
+
+```bash
+# Base features
+python -m src.train
+
+# Advanced features; models are saved under models/advanced/
+python -m src.train --dataset advanced
+```
+
+Evaluate the rank baseline using either dataset:
+
+```bash
+python -m src.evaluate
+python -m src.evaluate --dataset advanced
 ```
 
 ## Outputs
 
-Processed data:
-
 ```text
 data/processed/cleaned_matches.parquet
-```
-
-Feature dataset:
-
-```text
 data/features/match_features.parquet
-data/features/advanced/match_features.parquet
-```
-
-Train / validation / test split files:
-
-```text
 data/features/train.csv
 data/features/validation.csv
 data/features/test.csv
+data/features/advanced/match_features.parquet
 data/features/advanced/train.csv
 data/features/advanced/validation.csv
 data/features/advanced/test.csv
+models/*.pkl
+models/advanced/*.pkl
 ```
 
-Trained model:
+## Current Status
 
-```text
-models/logistic_regression.pkl
-models/random_forest.pkl
-models/xgboost.pkl
-models/lightgbm.pkl
-models/advanced/lightgbm.pkl
-```
+The base and advanced modeling pipelines are complete. The current best advanced LightGBM result is approximately 67.86% test accuracy and 73.96% test ROC-AUC.
 
-Status: done
+The prediction interface, persistent evaluation reports and automated tests are not implemented yet.
 
-Evaluation reports:
-
-```text
-reports/metrics.json
-reports/confusion_matrix.png
-```
-
-Status: planned
-
-## Next Focus: Accuracy Improvements
-
-The first full modeling pass is complete. The current best model is LightGBM with
-approximately 65.29% test accuracy.
-
-After adding rolling form, surface-specific win-rate, days-since-last-match,
-head-to-head, Elo, and surface-specific Elo features, the advanced LightGBM
-benchmark reached approximately 66.69% test accuracy and 72.67% test ROC-AUC.
-
-The next goal is to improve prediction accuracy with stronger pre-match tennis
-features:
-
-* Rolling last 5 match win rate: done
-* Rolling last 10 match win rate: done
-* Surface-specific win rate: done
-* Days since last match: done
-* Head-to-head win rate: done
-* Elo rating: done
-* Surface-specific Elo rating: done
-
-Future product improvements:
-
-* Command-line prediction interface
-* FastAPI prediction endpoint
-
-## Project Progress
-
-- [x] Data Ingestion
-- [x] Data Cleaning
-- [x] Feature Engineering
-- [x] Data Leakage Prevention Review
-- [x] Train / Validation / Test Split
-- [x] Baseline Model
-- [x] Model Training
-- [x] Model Benchmarking
-- [ ] Advanced Feature Engineering for Higher Accuracy
-  - [x] Rolling last 5/10 match win rate
-  - [x] Surface-specific win rate
-  - [x] Days since last match
-  - [x] Head-to-head win rate
-  - [x] Elo rating
-  - [x] Surface Elo rating
-- [ ] Final Evaluation Report
-- [ ] Prediction Interface
+For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).
