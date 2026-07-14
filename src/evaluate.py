@@ -1,8 +1,15 @@
 """Model evaluation utilities."""
 
+import argparse
 from pathlib import Path
 
 import pandas as pd
+
+
+DATASET_DIRECTORIES = {
+    "base": Path("data/features"),
+    "advanced": Path("data/features/advanced"),
+}
 
 
 def rank_baseline_predict(features: pd.DataFrame) -> pd.Series:
@@ -35,12 +42,30 @@ def evaluate_rank_baseline_splits(
     }
 
 
+def parse_args() -> argparse.Namespace:
+    """Parse the feature dataset selected for baseline evaluation."""
+    parser = argparse.ArgumentParser(description="Evaluate the rank baseline.")
+    parser.add_argument(
+        "--dataset",
+        choices=tuple(DATASET_DIRECTORIES),
+        default="base",
+        help="Feature dataset to evaluate (default: base).",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """Run rank-based baseline evaluation."""
-    metrics = evaluate_rank_baseline_splits()
+    args = parse_args()
+    data_dir = DATASET_DIRECTORIES[args.dataset]
+    metrics = evaluate_rank_baseline_splits(
+        validation_path=data_dir / "validation.csv",
+        test_path=data_dir / "test.csv",
+    )
 
-    print("Rank-based baseline evaluation")
-    print("------------------------------")
+    title = f"Rank-based baseline evaluation ({args.dataset})"
+    print(title)
+    print("-" * len(title))
     for metric_name, metric_value in metrics.items():
         print(f"{metric_name}: {metric_value:.4f}")
 

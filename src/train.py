@@ -1,5 +1,6 @@
 """Model training utilities."""
 
+import argparse
 from pathlib import Path
 
 import joblib
@@ -29,6 +30,16 @@ NON_FEATURE_COLUMNS = [
     "ioc_matchup",
 ]
 
+DATASET_DIRECTORIES = {
+    "base": Path("data/features"),
+    "advanced": Path("data/features/advanced"),
+}
+
+MODEL_DIRECTORIES = {
+    "base": Path("models"),
+    "advanced": Path("models/advanced"),
+}
+
 
 def load_split_data(
     train_path: str | Path = "data/features/train.csv",
@@ -40,6 +51,18 @@ def load_split_data(
         pd.read_csv(train_path),
         pd.read_csv(validation_path),
         pd.read_csv(test_path),
+    )
+
+
+def load_split_data_from_directory(
+    data_dir: str | Path,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load all feature splits from a dataset directory."""
+    data_dir = Path(data_dir)
+    return load_split_data(
+        train_path=data_dir / "train.csv",
+        validation_path=data_dir / "validation.csv",
+        test_path=data_dir / "test.csv",
     )
 
 
@@ -180,9 +203,12 @@ def save_model(
     return output_path
 
 
-def train_logistic_regression() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+def train_logistic_regression(
+    data_dir: str | Path = "data/features",
+    model_dir: str | Path = "models",
+) -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     """Train and evaluate the first logistic regression model."""
-    train, validation, test = load_split_data()
+    train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
     x_validation, y_validation = split_features_and_target(validation)
@@ -195,14 +221,17 @@ def train_logistic_regression() -> tuple[Pipeline, dict[str, dict[str, float]], 
         "validation": evaluate_classifier(model, x_validation, y_validation),
         "test": evaluate_classifier(model, x_test, y_test),
     }
-    model_path = save_model(model)
+    model_path = save_model(model, output_path=Path(model_dir) / "logistic_regression.pkl")
 
     return model, metrics, model_path
 
 
-def train_random_forest() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+def train_random_forest(
+    data_dir: str | Path = "data/features",
+    model_dir: str | Path = "models",
+) -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     """Train and evaluate the random forest model."""
-    train, validation, test = load_split_data()
+    train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
     x_validation, y_validation = split_features_and_target(validation)
@@ -215,14 +244,17 @@ def train_random_forest() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
         "validation": evaluate_classifier(model, x_validation, y_validation),
         "test": evaluate_classifier(model, x_test, y_test),
     }
-    model_path = save_model(model, output_path="models/random_forest.pkl")
+    model_path = save_model(model, output_path=Path(model_dir) / "random_forest.pkl")
 
     return model, metrics, model_path
 
 
-def train_xgboost() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+def train_xgboost(
+    data_dir: str | Path = "data/features",
+    model_dir: str | Path = "models",
+) -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     """Train and evaluate the XGBoost model."""
-    train, validation, test = load_split_data()
+    train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
     x_validation, y_validation = split_features_and_target(validation)
@@ -235,14 +267,17 @@ def train_xgboost() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
         "validation": evaluate_classifier(model, x_validation, y_validation),
         "test": evaluate_classifier(model, x_test, y_test),
     }
-    model_path = save_model(model, output_path="models/xgboost.pkl")
+    model_path = save_model(model, output_path=Path(model_dir) / "xgboost.pkl")
 
     return model, metrics, model_path
 
 
-def train_lightgbm() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
+def train_lightgbm(
+    data_dir: str | Path = "data/features",
+    model_dir: str | Path = "models",
+) -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
     """Train and evaluate the LightGBM model."""
-    train, validation, test = load_split_data()
+    train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
     x_validation, y_validation = split_features_and_target(validation)
@@ -255,7 +290,7 @@ def train_lightgbm() -> tuple[Pipeline, dict[str, dict[str, float]], Path]:
         "validation": evaluate_classifier(model, x_validation, y_validation),
         "test": evaluate_classifier(model, x_test, y_test),
     }
-    model_path = save_model(model, output_path="models/lightgbm.pkl")
+    model_path = save_model(model, output_path=Path(model_dir) / "lightgbm.pkl")
 
     return model, metrics, model_path
 
@@ -281,12 +316,32 @@ def print_model_report(
                 print(f"{metric_name}: {metric_value:.4f}")
 
 
+def parse_args() -> argparse.Namespace:
+    """Parse the feature dataset selected for model training."""
+    parser = argparse.ArgumentParser(description="Train all model candidates.")
+    parser.add_argument(
+        "--dataset",
+        choices=tuple(DATASET_DIRECTORIES),
+        default="base",
+        help="Feature dataset to train on (default: base).",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """Train all current model candidates."""
-    _, logistic_metrics, logistic_model_path = train_logistic_regression()
-    _, random_forest_metrics, random_forest_model_path = train_random_forest()
-    _, xgboost_metrics, xgboost_model_path = train_xgboost()
-    _, lightgbm_metrics, lightgbm_model_path = train_lightgbm()
+    args = parse_args()
+    data_dir = DATASET_DIRECTORIES[args.dataset]
+    model_dir = MODEL_DIRECTORIES[args.dataset]
+
+    print(f"Dataset: {args.dataset} ({data_dir})")
+    print(f"Model output directory: {model_dir}")
+    print()
+
+    _, logistic_metrics, logistic_model_path = train_logistic_regression(data_dir, model_dir)
+    _, random_forest_metrics, random_forest_model_path = train_random_forest(data_dir, model_dir)
+    _, xgboost_metrics, xgboost_model_path = train_xgboost(data_dir, model_dir)
+    _, lightgbm_metrics, lightgbm_model_path = train_lightgbm(data_dir, model_dir)
 
     print_model_report(
         "Logistic regression model",
