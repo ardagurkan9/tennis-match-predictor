@@ -1,3 +1,5 @@
+import argparse
+
 from src.clean import (
     POST_MATCH_LEAKAGE_COLUMNS,
     clean_matches,
@@ -7,8 +9,8 @@ from src.clean import (
 from src.ingest import load_raw_matches
 
 
-def main() -> None:
-    """Run the current preprocessing pipeline check."""
+def run_cleaning_check() -> None:
+    """Run the ingestion and cleaning pipeline check."""
     matches = load_raw_matches()
     cleaned_matches = clean_matches(matches)
     output_path = save_cleaned_matches(cleaned_matches)
@@ -74,6 +76,38 @@ def main() -> None:
     print("Missing value summary")
     print("---------------------")
     print(missing_summary.head(10).to_string(index=False))
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse the pipeline selected from the command line."""
+    parser = argparse.ArgumentParser(
+        description="Run a Tennis Match Predictor data pipeline.",
+    )
+    parser.add_argument(
+        "pipeline",
+        nargs="?",
+        choices=("clean", "advanced"),
+        default="clean",
+        help=(
+            "Pipeline to run: 'clean' performs the ingestion/cleaning check; "
+            "'advanced' builds advanced features and time-based splits "
+            "(default: clean)."
+        ),
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    """Run the selected project pipeline."""
+    args = parse_args()
+
+    if args.pipeline == "advanced":
+        from src.build_advanced_features import build_advanced_features
+
+        build_advanced_features()
+        return
+
+    run_cleaning_check()
 
 
 if __name__ == "__main__":
