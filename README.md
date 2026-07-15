@@ -44,11 +44,14 @@ main.py advanced → build_advanced_features.py
 └── split.py → advanced train/validation/test files
 ```
 
-Model training and evaluation remain separate steps:
+Model training, baseline evaluation, ablation, and persistent reporting are
+explicit separate steps:
 
 ```text
-train.py → trained model files
+train.py    → trained model files
 evaluate.py → rank-baseline metrics
+ablation.py → time-based market-feature ablation reports
+report.py   → model metrics and diagnostic plots
 ```
 
 ## Project Structure
@@ -72,7 +75,12 @@ tennis-match-predictor/
 │   ├── split.py
 │   ├── train.py
 │   ├── evaluate.py
+│   ├── ablation.py
+│   ├── report.py
 │   └── predict.py
+├── tests/
+│   ├── test_leakage.py
+│   └── test_prediction.py
 ├── main.py
 ├── requirements.txt
 └── README.md
@@ -82,25 +90,53 @@ tennis-match-predictor/
 
 Random splitting is not used because tennis data is time-dependent.
 
-| Split | Years |
-|---|---|
-| Train | 2015–2023 |
-| Validation | 2024 |
-| Test | 2025 |
+| Purpose | Years | Used as model rows? |
+|---|---|---|
+| Historical feature warm-up | 2000–2014 | No |
+| Train | 2015–2023 | Yes |
+| Validation | 2024 | Yes |
+| Retrospective test | 2025 | Yes |
 
-The advanced pipeline uses matches from 2000 onward to warm up player histories before retaining rows from 2015 onward for modeling.
+All raw ATP CSV files from 2000 onward are processed chronologically. Matches from
+2000–2014 initialize rolling form, serve statistics, H2H, Elo, and surface Elo, but
+their rows are removed before model training. Modeling starts in 2015 because the
+historical odds dataset covers 2015–2025.
 
 ## Installation
 
-Create and activate a virtual environment, then install the dependencies:
+Create and activate a virtual environment, then install the dependencies.
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+macOS/Linux:
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
 Raw ATP CSV files belong in `data/raw/`. Historical odds workbooks belong in `data/raw/odds/`.
 
 ## Usage
+
+Recommended advanced workflow:
+
+```bash
+python main.py advanced
+python -m src.train --dataset advanced
+python -m src.ablation
+python -m src.report
+python -m pytest
+```
+
+The commands below can also be run independently.
 
 Run the ingestion and cleaning check (the default mode):
 
@@ -160,7 +196,28 @@ Generate persistent model metrics and diagnostic plots:
 python -m src.report
 ```
 
+Predict a new matchup from historical state:
+
+```bash
+python -m src.predict \
+  --player "Carlos Alcaraz" \
+  --opponent "Jannik Sinner" \
+  --surface Hard \
+  --date 2026-01-15 \
+  --tourney-level G \
+  --best-of 5 \
+  --round SF \
+  --draw-size 128
+```
+
+Optional `--player-odds` and `--opponent-odds` values add a vig-free market
+probability. If both are omitted, the model uses neutral market inputs and marks
+odds as unavailable.
+
 ## Outputs
+
+The pipeline writes generated datasets, model artifacts, and reports to these
+locations:
 
 ```text
 data/processed/cleaned_matches.parquet
@@ -184,10 +241,16 @@ reports/calibration_curve.png
 
 ## Current Status
 
-The base and advanced modeling pipelines are complete. The current best advanced LightGBM result is approximately 67.86% test accuracy and 73.96% test ROC-AUC.
+The base and advanced modeling pipelines are complete. The saved advanced
+LightGBM reaches 67.86% accuracy and 73.96% ROC-AUC on the retrospective 2025
+benchmark.
 
-The prediction interface is not implemented yet. Automated leakage tests and
-persistent ablation reports are available; broader odds-matching, feature-symmetry,
-and end-to-end test coverage is still planned.
+The 2025 data was inspected during feature development, so it is not presented as
+an untouched final test set. Ablation decisions use expanding-window validation
+over 2020–2024; a future untouched year is required for a new final test.
+
+The prediction CLI, automated leakage tests, and persistent evaluation reports are
+available. A graphical frontend, broader odds-matching audit, and automated
+feature-symmetry coverage are still planned.
 
 For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).

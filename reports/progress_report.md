@@ -24,6 +24,7 @@ The latest generated advanced dataset contains **61,228 player-perspective rows 
 - A reproducible market-feature ablation command now compares rank baseline, market baseline, market-only LightGBM, tennis-only LightGBM, and full LightGBM using 2020–2024 expanding-window cross-validation. The previously inspected 2025 set is explicitly labeled as a retrospective benchmark.
 - Automated leakage regression tests now cover post-match column removal, current-match serve-stat isolation, future-result isolation, same-day update isolation, and strict time-split boundaries.
 - A persistent evaluation command now reports all advanced models and baselines with accuracy, ROC-AUC, log loss, Brier score, precision, recall, confusion matrices, odds-availability slices, and LightGBM diagnostic plots.
+- A memory-efficient future-match inference pipeline and CLI now rebuild current player state from matches strictly before the requested date, aligns the result to the saved 131-feature LightGBM schema, and returns symmetric two-player probabilities.
 - The unused `data/predictions/` placeholder was removed because no persistent prediction-output workflow is implemented.
 
 ## Completed Work
@@ -134,10 +135,11 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 
 ## Remaining Work
 
-### Prediction Interface
+### Graphical Prediction Interface
 
-- `src/predict.py` still contains only a module docstring.
-- A feature-building path for a future player-vs-player match is still required before CLI or API inference can be implemented reliably.
+- `src/predict.py` provides future-match feature generation and a working CLI.
+- A Streamlit frontend and optional API layer are still planned.
+- Rebuilding historical state takes several seconds and should be cached by the frontend.
 
 ### Reproducibility and Validation
 
@@ -167,6 +169,8 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 | Advanced model training                            | Done    |
 | Market-feature ablation report                     | Done    |
 | Persistent model evaluation report                 | Done    |
-| Prediction CLI/API                                 | Pending |
+| Future-match feature builder                       | Done    |
+| Prediction CLI                                     | Done    |
+| Streamlit frontend / API                           | Pending |
 | Leakage regression tests                           | Done |
 | Odds-match audit and broader automated tests       | Pending |

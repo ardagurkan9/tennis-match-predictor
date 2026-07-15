@@ -18,6 +18,20 @@ ODDS_COLUMN_PRIORITY = [
 MATCH_WINDOW_DAYS = 21
 
 
+def fair_probability_from_decimal_odds(
+    player_odds: float,
+    opponent_odds: float,
+) -> tuple[float, float]:
+    """Convert a decimal-odds pair into vig-free probabilities."""
+    if player_odds <= 1 or opponent_odds <= 1:
+        raise ValueError("Decimal odds must be greater than 1.")
+
+    player_implied = 1 / player_odds
+    opponent_implied = 1 / opponent_odds
+    overround = player_implied + opponent_implied
+    return player_implied / overround, opponent_implied / overround
+
+
 def _normalize_name_key(name: str) -> str:
     """Lowercase and strip everything but letters, for cross-source name matching."""
     return re.sub(r"[^a-z]", "", str(name).lower())
@@ -81,10 +95,7 @@ def compute_fair_implied_probability(row: pd.Series) -> tuple[float | None, floa
         if pd.isna(odds_w) or pd.isna(odds_l) or odds_w <= 1 or odds_l <= 1:
             continue
 
-        raw_p_w = 1 / odds_w
-        raw_p_l = 1 / odds_l
-        overround = raw_p_w + raw_p_l
-        return raw_p_w / overround, raw_p_l / overround
+        return fair_probability_from_decimal_odds(odds_w, odds_l)
 
     return None, None
 
