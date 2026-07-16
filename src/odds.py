@@ -15,7 +15,8 @@ ODDS_COLUMN_PRIORITY = [
     ("B365W", "B365L"),
 ]
 
-MATCH_WINDOW_DAYS = 21
+MATCH_WINDOW_DAYS = 7
+MIN_MATCH_CONFIDENCE = 0.80
 
 
 def fair_probability_from_decimal_odds(
@@ -35,6 +36,13 @@ def fair_probability_from_decimal_odds(
 def _normalize_name_key(name: str) -> str:
     """Lowercase and strip everything but letters, for cross-source name matching."""
     return re.sub(r"[^a-z]", "", str(name).lower())
+
+
+def _normalize_tournament_key(name: str) -> str:
+    """Normalize tournament labels while dropping source-specific boilerplate."""
+    tokens = _name_tokens(name)
+    ignored = {"atp", "wta", "open", "championships", "tennis"}
+    return "".join(token for token in tokens if token not in ignored)
 
 
 def _split_odds_player(name: str) -> tuple[str, str]:
@@ -170,6 +178,40 @@ def _find_odds_match(
     return None
 
 
+def _find_odds_match_with_confidence(
+    winner_name: str,
+    loser_name: str,
+    candidates: pd.DataFrame,
+) -> tuple[pd.Series | None, float, str]:
+    """Return an unambiguous name match plus an auditable confidence score."""
+    winner_tokens, winner_initial = _full_name_tokens_and_initial(winner_name)
+    loser_tokens, loser_initial = _full_name_tokens_and_initial(loser_name)
+
+    strict_hits = []
+    surname_hits = []
+    for _, candidate in candidates.iterrows():
+        surnames_match = _surname_matches(
+            winner_tokens, candidate["winner_surname_tokens"]
+        ) and _surname_matches(loser_tokens, candidate["loser_surname_tokens"])
+        if not surnames_match:
+            continue
+        surname_hits.append(candidate)
+        if _initial_matches(candidate["winner_initial"], winner_initial) and (
+            _initial_matches(candidate["loser_initial"], loser_initial)
+        ):
+            strict_hits.append(candidate)
+
+    if len(strict_hits) == 1:
+        return strict_hits[0], 0.90, "surname_and_initial"
+    if len(surname_hits) == 1:
+        # Retain the candidate for auditing, but keep it below the model-use
+        # threshold because same-surname players can create false positives.
+        return surname_hits[0], 0.55, "surname_only"
+    if strict_hits or surname_hits:
+        return None, 0.0, "ambiguous"
+    return None, 0.0, "unmatched"
+
+
 def match_odds_to_matches(
     raw_matches: pd.DataFrame,
     odds: pd.DataFrame,
@@ -185,6 +227,8 @@ def match_odds_to_matches(
     winner_prob = pd.Series(index=matches.index, dtype="float64")
     loser_prob = pd.Series(index=matches.index, dtype="float64")
     matched_flag = pd.Series(False, index=matches.index)
+    match_confidence = pd.Series(0.0, index=matches.index, dtype="float64")
+    match_method = pd.Series("unmatched", index=matches.index, dtype="object")
 
     odds_dates = odds["Date"]
 
@@ -201,10 +245,37 @@ def match_odds_to_matches(
             continue
 
         for row_index, match_row in group.iterrows():
-            found = _find_odds_match(
+            match_candidates = candidates
+            if "Tournament" in candidates.columns and pd.notna(
+                match_row.get("tourney_name")
+            ):
+                tournament_key = _normalize_tournament_key(match_row["tourney_name"])
+                if tournament_key:
+                    tournament_mask = candidates["Tournament"].map(
+                        _normalize_tournament_key
+                    ).eq(tournament_key)
+                    if tournament_mask.any():
+                        match_candidates = candidates[tournament_mask]
+
+            found, confidence, method = _find_odds_match_with_confidence(
                 match_row["winner_name"], match_row["loser_name"], candidates
             )
-            if found is not None and pd.notna(found["fair_winner_prob"]):
+            if match_candidates is not candidates:
+                found, confidence, method = _find_odds_match_with_confidence(
+                    match_row["winner_name"],
+                    match_row["loser_name"],
+                    match_candidates,
+                )
+                if found is not None:
+                    confidence = min(1.0, confidence + 0.08)
+                    method += "+tournament"
+            match_confidence.at[row_index] = confidence
+            match_method.at[row_index] = method
+            if (
+                found is not None
+                and confidence >= MIN_MATCH_CONFIDENCE
+                and pd.notna(found["fair_winner_prob"])
+            ):
                 winner_prob.at[row_index] = found["fair_winner_prob"]
                 loser_prob.at[row_index] = found["fair_loser_prob"]
                 matched_flag.at[row_index] = True
@@ -212,5 +283,7 @@ def match_odds_to_matches(
     matches["winner_market_prob"] = winner_prob.fillna(0.5)
     matches["loser_market_prob"] = loser_prob.fillna(0.5)
     matches["market_odds_available"] = matched_flag.astype("int8")
+    matches["odds_match_confidence"] = match_confidence
+    matches["odds_match_method"] = match_method
 
     return matches.drop(columns=["_match_date"])

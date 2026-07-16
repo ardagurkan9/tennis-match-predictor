@@ -57,9 +57,76 @@ def calculate_metrics(
         "roc_auc": float(roc_auc_score(target, probability)),
         "log_loss": float(log_loss(target, probability, labels=[0, 1])),
         "brier_score": float(brier_score_loss(target, probability)),
+        "expected_calibration_error": expected_calibration_error(target, probability),
         "precision": float(precision_score(target, prediction, zero_division=0)),
         "recall": float(recall_score(target, prediction, zero_division=0)),
         "confusion_matrix": confusion_matrix(target, prediction).tolist(),
+    }
+
+
+def expected_calibration_error(
+    target: pd.Series | np.ndarray,
+    probability: pd.Series | np.ndarray,
+    n_bins: int = 10,
+) -> float:
+    """Return equal-width expected calibration error (ECE)."""
+    target_array = np.asarray(target, dtype="float64")
+    probability_array = np.asarray(probability, dtype="float64")
+    bin_ids = np.minimum((probability_array * n_bins).astype(int), n_bins - 1)
+    error = 0.0
+    for bin_id in range(n_bins):
+        mask = bin_ids == bin_id
+        if mask.any():
+            error += float(mask.mean()) * abs(
+                float(target_array[mask].mean())
+                - float(probability_array[mask].mean())
+            )
+    return float(error)
+
+
+def symmetric_match_probabilities(
+    data: pd.DataFrame,
+    direct_probability: np.ndarray | pd.Series,
+) -> tuple[np.ndarray, dict[str, float]]:
+    """Apply the production two-perspective formula to every match.
+
+    Each match must have exactly the winner and loser perspective rows.  The
+    returned array remains row-aligned so ordinary binary metrics stay useful,
+    while every complementary pair represents one production prediction.
+    """
+    if "match_id" not in data:
+        raise ValueError("Symmetric evaluation requires a match_id column.")
+
+    probability = np.asarray(direct_probability, dtype="float64")
+    if len(probability) != len(data):
+        raise ValueError("Probability count must match the evaluation rows.")
+
+    symmetric = np.empty(len(data), dtype="float64")
+    gaps: list[float] = []
+    positions = pd.Series(np.arange(len(data)), index=data.index)
+    for match_id, group in data.groupby("match_id", sort=False):
+        if len(group) != 2 or set(group["target_win"].astype(int)) != {0, 1}:
+            raise ValueError(
+                f"Match {match_id!r} must contain exactly one row per perspective."
+            )
+        winner_index = group.index[group["target_win"].eq(1)][0]
+        loser_index = group.index[group["target_win"].eq(0)][0]
+        winner_position = int(positions.loc[winner_index])
+        loser_position = int(positions.loc[loser_index])
+        winner_direct = float(probability[winner_position])
+        loser_direct = float(probability[loser_position])
+        winner_symmetric = (winner_direct + (1.0 - loser_direct)) / 2.0
+        symmetric[winner_position] = winner_symmetric
+        symmetric[loser_position] = 1.0 - winner_symmetric
+        gaps.append(abs(winner_direct + loser_direct - 1.0))
+
+    gap_array = np.asarray(gaps, dtype="float64")
+    return symmetric, {
+        "match_count": int(len(gap_array)),
+        "mean": float(gap_array.mean()),
+        "median": float(np.median(gap_array)),
+        "p95": float(np.quantile(gap_array, 0.95)),
+        "max": float(gap_array.max()),
     }
 
 
@@ -116,7 +183,7 @@ def evaluate_models(
     for split_name, path in split_paths.items():
         data = pd.read_csv(path)
         features, _ = split_features_and_target(data)
-        probabilities = {
+        direct_probabilities = {
             "rank_baseline": rank_probability(data),
             "market_baseline": market_probability(data),
             **{
@@ -124,8 +191,20 @@ def evaluate_models(
                 for name, model in models.items()
             },
         }
+        probabilities = {}
+        symmetry = {}
+        for name, direct_probability in direct_probabilities.items():
+            probability, gap_summary = symmetric_match_probabilities(
+                data, direct_probability
+            )
+            probabilities[name] = probability
+            symmetry[name] = gap_summary
         report[split_name] = {
-            name: evaluate_scopes(data, probability)
+            name: {
+                "scopes": evaluate_scopes(data, probability),
+                "symmetry_gap": symmetry[name],
+                "evaluation_method": "production_two_perspective_average",
+            }
             for name, probability in probabilities.items()
         }
         lightgbm_plot_data[split_name] = (data, probabilities["lightgbm"])
@@ -137,7 +216,8 @@ def flatten_report(report: dict) -> pd.DataFrame:
     """Convert the structured report to one row per split/model/scope."""
     rows = []
     for split_name, models in report.items():
-        for model_name, scopes in models.items():
+        for model_name, model_result in models.items():
+            scopes = model_result["scopes"]
             for scope, metrics in scopes.items():
                 if metrics is None:
                     continue
@@ -151,6 +231,10 @@ def flatten_report(report: dict) -> pd.DataFrame:
                         if key != "confusion_matrix"
                     },
                     "confusion_matrix": json.dumps(metrics["confusion_matrix"]),
+                    **{
+                        f"symmetry_gap_{key}": value
+                        for key, value in model_result["symmetry_gap"].items()
+                    },
                 }
                 rows.append(row)
     return pd.DataFrame(rows)
@@ -238,6 +322,10 @@ def save_reports(
                     "warning": (
                         "The 2025 set was inspected during development and is not an "
                         "untouched final test set."
+                    ),
+                    "evaluation_method": (
+                        "Each match is predicted from both perspectives and combined "
+                        "with the same complementary averaging formula used in production."
                     ),
                 },
                 "results": report,

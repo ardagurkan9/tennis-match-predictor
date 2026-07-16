@@ -8,13 +8,15 @@ import pandas as pd
 TRAIN_START_YEAR = 2015
 TRAIN_END_YEAR = 2023
 VALIDATION_YEAR = 2024
-TEST_YEAR = 2025
+RETROSPECTIVE_BENCHMARK_YEAR = 2025
+# Backward-compatible alias for callers that still import TEST_YEAR.
+TEST_YEAR = RETROSPECTIVE_BENCHMARK_YEAR
 
 
 def split_features_by_year(
     features: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Split feature data into train, validation, and test sets by year."""
+    """Split features into train, validation, and retrospective benchmark sets."""
     train = features[
         features["tourney_year"].between(TRAIN_START_YEAR, TRAIN_END_YEAR)
     ].reset_index(drop=True)
@@ -67,17 +69,17 @@ def main() -> None:
     """Create train, validation, and test CSV files."""
     train, validation, test, output_paths = create_split_csvs()
 
-    print("Train / validation / test split")
+    print("Train / validation / retrospective benchmark split")
     print("-------------------------------")
     print(f"Train years: {TRAIN_START_YEAR}-{TRAIN_END_YEAR}")
     print(f"Validation year: {VALIDATION_YEAR}")
-    print(f"Test year: {TEST_YEAR}")
+    print(f"Retrospective benchmark year: {RETROSPECTIVE_BENCHMARK_YEAR}")
     print(f"Train shape: {train.shape}")
     print(f"Validation shape: {validation.shape}")
-    print(f"Test shape: {test.shape}")
+    print(f"Retrospective benchmark shape: {test.shape}")
     print(f"Train CSV: {output_paths['train']}")
     print(f"Validation CSV: {output_paths['validation']}")
-    print(f"Test CSV: {output_paths['test']}")
+    print(f"Retrospective benchmark CSV (legacy filename): {output_paths['test']}")
 
 
 if __name__ == "__main__":

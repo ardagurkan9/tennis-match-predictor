@@ -1,5 +1,7 @@
 # Tennis Match Predictor
 
+[![CI](https://github.com/ardagurkan9/tennis-match-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/ardagurkan9/tennis-match-predictor/actions/workflows/ci.yml)
+
 An end-to-end machine learning pipeline for predicting professional ATP tennis match outcomes using historical match data and pre-match betting odds.
 
 The project focuses on reproducible, time-aware and leakage-free feature engineering. Each match is represented from both players' perspectives, and the model predicts whether the selected player wins:
@@ -108,6 +110,10 @@ historical odds dataset covers 2015–2025.
 
 ## Installation
 
+Python 3.11 or 3.12 is supported. Dependency versions are pinned in
+`requirements.txt` and captured in `requirements.lock`; the Python constraint
+and tool configuration live in `pyproject.toml`.
+
 Create and activate a virtual environment, then install the dependencies.
 
 Windows PowerShell:
@@ -127,6 +133,35 @@ python -m pip install -r requirements.txt
 ```
 
 Raw ATP CSV files belong in `data/raw/`. Historical odds workbooks belong in `data/raw/odds/`.
+
+On systems with `make`, dependency setup is one command:
+
+```bash
+make setup
+```
+
+## Production Model
+
+The binary model artifact is intentionally not stored in Git. Download the
+`lightgbm.pkl` release asset before starting the application:
+
+```bash
+python scripts/download_model.py
+```
+
+Maintainers must attach `models/advanced/lightgbm.pkl` as `lightgbm.pkl` to a
+GitHub Release for the default URL to work. A custom mirror can be selected with
+`--url`, and `--sha256` verifies a published checksum.
+
+If no release asset is available, build the dataset and train locally:
+
+```bash
+python main.py advanced
+python -m src.train --dataset advanced
+```
+
+The CLI and Streamlit app fail early with these recovery commands when the model
+is absent.
 
 ## Usage
 
@@ -194,6 +229,12 @@ Run the automated leakage regression tests:
 python -m pytest
 ```
 
+Run lint checks:
+
+```bash
+python -m ruff check .
+```
+
 Generate persistent model metrics and diagnostic plots:
 
 ```bash
@@ -231,6 +272,39 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
+The UI shows the dataset cutoff and marks predictions as low-confidence when the
+history is more than 180 days old. Displayed probabilities are estimates, not
+guarantees; live rankings, injuries and form are unavailable.
+
+Docker is also supported after the model has been downloaded:
+
+```bash
+docker build -t tennis-match-predictor .
+docker run --rm -p 8501:8501 tennis-match-predictor
+```
+
+## Evaluation Protocol
+
+Official reports group rows by `match_id`, predict both player perspectives and
+apply the exact production formula:
+
+```text
+P(A beats B) = (direct_P(A beats B) + 1 - direct_P(B beats A)) / 2
+```
+
+| Dataset | Accuracy | ROC-AUC | Log loss | Brier | ECE |
+|---|---:|---:|---:|---:|---:|
+| Validation 2024 | 67.69% | 75.24% | 0.5850 | 0.2012 | 0.0092 |
+| Retrospective benchmark 2025 | 67.56% | 73.89% | 0.5973 | 0.2066 | 0.0186 |
+
+For the 2025 retrospective benchmark, the LightGBM direct-model symmetry gap is
+0.0125 mean, 0.0092 median, 0.0362 p95 and 0.1730 maximum. Full per-model and
+subgroup results are in `reports/model_metrics.csv` and
+`reports/model_metrics.json`.
+
+The 2025 data was inspected during development. It is a retrospective benchmark,
+not an untouched final test set, and is not used to select features or models.
+
 ## Outputs
 
 The pipeline writes generated datasets, model artifacts, and reports to these
@@ -258,16 +332,18 @@ reports/calibration_curve.png
 
 ## Current Status
 
-The base and advanced modeling pipelines are complete. The saved advanced
-LightGBM reaches 67.86% accuracy and 73.96% ROC-AUC on the retrospective 2025
-benchmark.
+The base and advanced modeling pipelines are complete. With production's
+two-perspective averaging, the saved advanced LightGBM reaches 67.56% accuracy
+and 73.89% ROC-AUC on the retrospective 2025 benchmark.
 
 The 2025 data was inspected during feature development, so it is not presented as
 an untouched final test set. Ablation decisions use expanding-window validation
 over 2020–2024; a future untouched year is required for a new final test.
 
-The prediction CLI, a Streamlit graphical frontend, automated leakage tests, and
-persistent evaluation reports are available. A broader odds-matching audit and
-automated feature-symmetry coverage are still planned.
+The odds matcher uses a seven-day window, tournament validation where available,
+and auditable confidence/method fields. Surname-only matches stay below the
+model-use threshold. Matching and feature-symmetry regression tests are included;
+a statistically meaningful manual sample audit is still required before claiming
+a measured false-positive rate.
 
 For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).

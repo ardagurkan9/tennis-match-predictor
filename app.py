@@ -362,12 +362,30 @@ def main() -> None:
     )
     st.warning("Live data is not used. Predictions are based only on historical match data.")
 
+    if not DEFAULT_MODEL_PATH.exists():
+        st.error(
+            f"Required model file is missing: {DEFAULT_MODEL_PATH}. "
+            "Download it before predicting."
+        )
+        st.code("python scripts/download_model.py", language="bash")
+        st.caption(
+            "Alternatively train it locally with: "
+            "python -m src.train --dataset advanced"
+        )
+        st.stop()
+
     raw_matches = get_raw_matches()
     players = get_player_list(raw_matches)
     dataset_cutoff = latest_match_date(raw_matches)
     default_match_date = (dataset_cutoff + pd.Timedelta(days=1)).date()
 
     st.caption(f"Latest recorded match date in the dataset: {dataset_cutoff.date().isoformat()}")
+    age_days = (pd.Timestamp.today().normalize() - dataset_cutoff.normalize()).days
+    if age_days > 180:
+        st.warning(
+            f"The historical dataset is {age_days} days old. Predictions are "
+            "low-confidence because current rankings, form and injuries are unavailable."
+        )
 
     with st.form("match_form"):
         col1, col2 = st.columns(2)

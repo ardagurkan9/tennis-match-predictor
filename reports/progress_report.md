@@ -23,7 +23,7 @@ The latest generated advanced dataset contains **61,228 player-perspective rows 
 - A thesis-inspired XGBoost search used five expanding-window validation folds (2020–2024) and selected `n_estimators=100`, `max_depth=3`, `min_child_weight=1`, `subsample=0.8`, `learning_rate=0.05`, and no L1/L2 regularization. After refitting on 2015–2024, it reached `0.6772` test accuracy, `0.7392` ROC-AUC, `0.5993` log loss, and `0.2068` Brier score on 2025. This improved XGBoost over its current parameters on the same training period (`0.6755` accuracy) but did not beat LightGBM, so no production model was replaced.
 - A reproducible market-feature ablation command now compares rank baseline, market baseline, market-only LightGBM, tennis-only LightGBM, and full LightGBM using 2020–2024 expanding-window cross-validation. The previously inspected 2025 set is explicitly labeled as a retrospective benchmark.
 - Automated leakage regression tests now cover post-match column removal, current-match serve-stat isolation, future-result isolation, same-day update isolation, and strict time-split boundaries.
-- A persistent evaluation command now reports all advanced models and baselines with accuracy, ROC-AUC, log loss, Brier score, precision, recall, confusion matrices, odds-availability slices, and LightGBM diagnostic plots.
+- A persistent evaluation command now groups by `match_id`, applies the production two-perspective averaging formula, and reports all advanced models and baselines with accuracy, ROC-AUC, log loss, Brier score, ECE, precision, recall, confusion matrices, odds-availability slices, symmetry-gap summaries, and LightGBM diagnostic plots.
 - A memory-efficient future-match inference pipeline and CLI now rebuild current player state from matches strictly before the requested date, aligns the result to the saved 131-feature LightGBM schema, and returns symmetric two-player probabilities.
 - The unused `data/predictions/` placeholder was removed because no persistent prediction-output workflow is implemented.
 
@@ -82,8 +82,9 @@ The full 2000–2025 history is used to warm up these rolling statistics. Only r
 
 - Historical Excel odds files for 2015–2025 are stored in `data/raw/odds/`.
 - `src/odds.py` loads the files using the newly added `openpyxl` and `xlrd` dependencies.
-- ATP player names are matched to odds records using normalized surname tokens and first initials, including fallback handling for compound or differently transliterated surnames.
-- Matching searches from the ATP tournament date through the following 21 days.
+- ATP player names are matched using normalized surname tokens and first initials, with tournament-name validation where source data permits it.
+- Matching searches from the ATP tournament date through the following seven days.
+- Every candidate receives an auditable confidence and method. Surname-only fallback candidates are marked below the model-use threshold and therefore receive neutral market inputs.
 - Odds source priority is Pinnacle (`PSW`/`PSL`), market average (`AvgW`/`AvgL`), then Bet365 (`B365W`/`B365L`).
 - Bookmaker margin is removed by normalizing the two implied probabilities.
 - The resulting features are `player_market_prob`, `opponent_market_prob`, `market_prob_diff`, and `market_odds_available`.
@@ -163,10 +164,10 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 
 ### Reproducibility and Validation
 
-- Leakage regression tests cover chronological future isolation and same-day update isolation. Name matching, odds matching, feature symmetry, and end-to-end pipeline tests are still missing.
+- Regression tests cover chronological future isolation, same-day update isolation, name/odds confidence behavior, difference-feature sign symmetry, production probability symmetry, missing-model recovery, and inference feature stability.
 - `main.py advanced` runs the advanced dataset build; model training and reporting remain explicit separate commands.
-- Odds matching should be audited for false matches caused by the 21-day date window, surname-only fallback, and cross-source tournament/date differences.
-- GitHub Actions is not yet configured to run the test suite automatically.
+- A manually labeled, statistically meaningful sample is still needed before publishing an odds false-positive rate.
+- GitHub Actions runs Ruff and pytest on Python 3.11 and 3.12 for pushes and pull requests.
 
 ## Summary
 
@@ -194,4 +195,5 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 | Streamlit frontend                                 | Done    |
 | Optional API layer                                 | Pending |
 | Leakage regression tests                           | Done |
-| Odds-match audit and broader automated tests       | Pending |
+| Odds confidence safeguards and automated tests     | Done |
+| Manually labeled odds false-positive audit         | Pending |

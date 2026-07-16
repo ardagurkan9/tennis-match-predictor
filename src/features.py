@@ -18,6 +18,8 @@ CONTEXT_COLUMNS = [
     "tourney_month",
     "tourney_day",
     "market_odds_available",
+    "odds_match_confidence",
+    "odds_match_method",
 ]
 
 PLAYER_COLUMNS = [

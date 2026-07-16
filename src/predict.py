@@ -103,7 +103,11 @@ def load_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> object:
     """Load a trained model artifact from disk, raising a clear error if missing."""
     model_path = Path(model_path)
     if not model_path.exists():
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+        raise FileNotFoundError(
+            f"Model file not found: {model_path}. Download it with "
+            "`python scripts/download_model.py` or train it with "
+            "`python -m src.train --dataset advanced`."
+        )
     return joblib.load(model_path)
 
 

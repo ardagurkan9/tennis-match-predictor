@@ -2,683 +2,840 @@
   "protocol": {
     "validation": 2024,
     "retrospective_holdout": 2025,
-    "warning": "The 2025 set was inspected during development and is not an untouched final test set."
+    "warning": "The 2025 set was inspected during development and is not an untouched final test set.",
+    "evaluation_method": "Each match is predicted from both perspectives and combined with the same complementary averaging formula used in production."
   },
   "results": {
     "validation_2024": {
       "rank_baseline": {
-        "all": {
-          "accuracy": 0.6350966107063668,
-          "roc_auc": 0.6350966107063667,
-          "log_loss": 13.152451284213798,
-          "brier_score": 0.3649033892936332,
-          "precision": 0.6350966107063668,
-          "recall": 0.6350966107063668,
-          "confusion_matrix": [
-            [
-              2005,
-              1152
-            ],
-            [
-              1152,
-              2005
+        "scopes": {
+          "all": {
+            "accuracy": 0.6350966107063668,
+            "roc_auc": 0.6350966107063667,
+            "log_loss": 13.152451284213798,
+            "brier_score": 0.3649033892936332,
+            "expected_calibration_error": 0.3649033892936332,
+            "precision": 0.6350966107063668,
+            "recall": 0.6350966107063668,
+            "confusion_matrix": [
+              [
+                2005,
+                1152
+              ],
+              [
+                1152,
+                2005
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.63413715146948,
+            "roc_auc": 0.63413715146948,
+            "log_loss": 13.187033700389131,
+            "brier_score": 0.36586284853052,
+            "expected_calibration_error": 0.36586284853052,
+            "precision": 0.63413715146948,
+            "recall": 0.63413715146948,
+            "confusion_matrix": [
+              [
+                1683,
+                971
+              ],
+              [
+                971,
+                1683
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6401590457256461,
+            "roc_auc": 0.6401590457256461,
+            "log_loss": 12.969982631073965,
+            "brier_score": 0.35984095427435386,
+            "expected_calibration_error": 0.3598409542743539,
+            "precision": 0.6401590457256461,
+            "recall": 0.6401590457256461,
+            "confusion_matrix": [
+              [
+                322,
+                181
+              ],
+              [
+                181,
+                322
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.63413715146948,
-          "roc_auc": 0.63413715146948,
-          "log_loss": 13.187033700389131,
-          "brier_score": 0.36586284853052,
-          "precision": 0.63413715146948,
-          "recall": 0.63413715146948,
-          "confusion_matrix": [
-            [
-              1683,
-              971
-            ],
-            [
-              971,
-              1683
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "max": 0.0
         },
-        "odds_missing": {
-          "accuracy": 0.6401590457256461,
-          "roc_auc": 0.6401590457256461,
-          "log_loss": 12.969982631073965,
-          "brier_score": 0.35984095427435386,
-          "precision": 0.6401590457256461,
-          "recall": 0.6401590457256461,
-          "confusion_matrix": [
-            [
-              322,
-              181
-            ],
-            [
-              181,
-              322
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "market_baseline": {
-        "all": {
-          "accuracy": 0.6536268609439341,
-          "roc_auc": 0.7272967574156569,
-          "log_loss": 0.6036519848788652,
-          "brier_score": 0.20926285618802987,
-          "precision": 0.6319368879216539,
-          "recall": 0.7358251504592968,
-          "confusion_matrix": [
-            [
-              1804,
-              1353
-            ],
-            [
-              834,
-              2323
+        "scopes": {
+          "all": {
+            "accuracy": 0.6536268609439341,
+            "roc_auc": 0.7273021253181485,
+            "log_loss": 0.6036519848788652,
+            "brier_score": 0.20926285618802987,
+            "expected_calibration_error": 0.0073781301338030165,
+            "precision": 0.6319368879216539,
+            "recall": 0.7358251504592968,
+            "confusion_matrix": [
+              [
+                1804,
+                1353
+              ],
+              [
+                834,
+                2323
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6827430293896006,
+            "roc_auc": 0.752356923532976,
+            "log_loss": 0.5866903859988413,
+            "brier_score": 0.20154213902999635,
+            "expected_calibration_error": 0.008776472054414529,
+            "precision": 0.6816479400749064,
+            "recall": 0.6857573474001507,
+            "confusion_matrix": [
+              [
+                1804,
+                850
+              ],
+              [
+                834,
+                1820
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.5,
+            "roc_auc": 0.5,
+            "log_loss": 0.6931471805599454,
+            "brier_score": 0.25,
+            "expected_calibration_error": 0.0,
+            "precision": 0.5,
+            "recall": 1.0,
+            "confusion_matrix": [
+              [
+                0,
+                503
+              ],
+              [
+                0,
+                503
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6827430293896006,
-          "roc_auc": 0.7523493281103326,
-          "log_loss": 0.5866903859988413,
-          "brier_score": 0.20154213902999635,
-          "precision": 0.6816479400749064,
-          "recall": 0.6857573474001507,
-          "confusion_matrix": [
-            [
-              1804,
-              850
-            ],
-            [
-              834,
-              1820
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 3.527252751659905e-17,
+          "median": 0.0,
+          "p95": 2.220446049250313e-16,
+          "max": 3.3306690738754696e-16
         },
-        "odds_missing": {
-          "accuracy": 0.5,
-          "roc_auc": 0.5,
-          "log_loss": 0.6931471805599454,
-          "brier_score": 0.25,
-          "precision": 0.5,
-          "recall": 1.0,
-          "confusion_matrix": [
-            [
-              0,
-              503
-            ],
-            [
-              0,
-              503
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "logistic_regression": {
-        "all": {
-          "accuracy": 0.6737408932530884,
-          "roc_auc": 0.7403865632270183,
-          "log_loss": 0.5979796355713941,
-          "brier_score": 0.20611644895375753,
-          "precision": 0.6737408932530884,
-          "recall": 0.6737408932530884,
-          "confusion_matrix": [
-            [
-              2127,
-              1030
-            ],
-            [
-              1030,
-              2127
+        "scopes": {
+          "all": {
+            "accuracy": 0.6737408932530884,
+            "roc_auc": 0.7403865632270186,
+            "log_loss": 0.597979635571394,
+            "brier_score": 0.2061164489537575,
+            "expected_calibration_error": 0.006728087517867456,
+            "precision": 0.6737408932530884,
+            "recall": 0.6737408932530884,
+            "confusion_matrix": [
+              [
+                2127,
+                1030
+              ],
+              [
+                1030,
+                2127
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6774679728711379,
+            "roc_auc": 0.7471624352827398,
+            "log_loss": 0.5917383975147634,
+            "brier_score": 0.20360603408210276,
+            "expected_calibration_error": 0.01240240571860803,
+            "precision": 0.6774679728711379,
+            "recall": 0.6774679728711379,
+            "confusion_matrix": [
+              [
+                1798,
+                856
+              ],
+              [
+                856,
+                1798
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6540755467196819,
+            "roc_auc": 0.7226501824045786,
+            "log_loss": 0.6309105417389836,
+            "brier_score": 0.21936225624873107,
+            "expected_calibration_error": 0.06674584711802067,
+            "precision": 0.6540755467196819,
+            "recall": 0.6540755467196819,
+            "confusion_matrix": [
+              [
+                329,
+                174
+              ],
+              [
+                174,
+                329
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6774679728711379,
-          "roc_auc": 0.7471624352827398,
-          "log_loss": 0.5917383975147636,
-          "brier_score": 0.2036060340821028,
-          "precision": 0.6774679728711379,
-          "recall": 0.6774679728711379,
-          "confusion_matrix": [
-            [
-              1798,
-              856
-            ],
-            [
-              856,
-              1798
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 5.2955950257350976e-14,
+          "median": 4.163336342344337e-14,
+          "p95": 1.459721232777155e-13,
+          "max": 2.9531932455029164e-13
         },
-        "odds_missing": {
-          "accuracy": 0.6540755467196819,
-          "roc_auc": 0.7226501824045786,
-          "log_loss": 0.6309105417389836,
-          "brier_score": 0.219362256248731,
-          "precision": 0.6540755467196819,
-          "recall": 0.6540755467196819,
-          "confusion_matrix": [
-            [
-              329,
-              174
-            ],
-            [
-              174,
-              329
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "random_forest": {
-        "all": {
-          "accuracy": 0.6860943934114666,
-          "roc_auc": 0.7498054762438207,
-          "log_loss": 0.5917108531906442,
-          "brier_score": 0.2031676393042278,
-          "precision": 0.6872808415683774,
-          "recall": 0.6829268292682927,
-          "confusion_matrix": [
-            [
-              2176,
-              981
-            ],
-            [
-              1001,
-              2156
+        "scopes": {
+          "all": {
+            "accuracy": 0.6851441241685144,
+            "roc_auc": 0.7509903278423872,
+            "log_loss": 0.5907985492794379,
+            "brier_score": 0.20278750749215455,
+            "expected_calibration_error": 0.023384953238108474,
+            "precision": 0.6851441241685144,
+            "recall": 0.6851441241685144,
+            "confusion_matrix": [
+              [
+                2163,
+                994
+              ],
+              [
+                994,
+                2163
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6831198191409193,
+            "roc_auc": 0.7490186997885775,
+            "log_loss": 0.5914860067856522,
+            "brier_score": 0.20330143513561869,
+            "expected_calibration_error": 0.018437350835794522,
+            "precision": 0.6831198191409193,
+            "recall": 0.6831198191409193,
+            "confusion_matrix": [
+              [
+                1813,
+                841
+              ],
+              [
+                841,
+                1813
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6958250497017893,
+            "roc_auc": 0.7628661431016288,
+            "log_loss": 0.587171288401719,
+            "brier_score": 0.20007584950854837,
+            "expected_calibration_error": 0.0494901953369978,
+            "precision": 0.6958250497017893,
+            "recall": 0.6958250497017893,
+            "confusion_matrix": [
+              [
+                350,
+                153
+              ],
+              [
+                153,
+                350
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6851921627731725,
-          "roc_auc": 0.7478225981853897,
-          "log_loss": 0.5923076746479528,
-          "brier_score": 0.20368116286866836,
-          "precision": 0.6866691986327383,
-          "recall": 0.6812358703843255,
-          "confusion_matrix": [
-            [
-              1829,
-              825
-            ],
-            [
-              846,
-              1808
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 0.02192680761051048,
+          "median": 0.017683818618029257,
+          "p95": 0.05599723451692751,
+          "max": 0.1292151281667535
         },
-        "odds_missing": {
-          "accuracy": 0.6908548707753479,
-          "roc_auc": 0.7618938456734741,
-          "log_loss": 0.5885618190997959,
-          "brier_score": 0.20045811337972438,
-          "precision": 0.6904761904761905,
-          "recall": 0.6918489065606361,
-          "confusion_matrix": [
-            [
-              347,
-              156
-            ],
-            [
-              155,
-              348
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "xgboost": {
-        "all": {
-          "accuracy": 0.6789673740893253,
-          "roc_auc": 0.7522727548647494,
-          "log_loss": 0.5855686909558969,
-          "brier_score": 0.2013018294075853,
-          "precision": 0.6782334384858044,
-          "recall": 0.6810262907823883,
-          "confusion_matrix": [
-            [
-              2137,
-              1020
-            ],
-            [
-              1007,
-              2150
+        "scopes": {
+          "all": {
+            "accuracy": 0.679125752296484,
+            "roc_auc": 0.7526754478862454,
+            "log_loss": 0.5848867711815322,
+            "brier_score": 0.20106505457185833,
+            "expected_calibration_error": 0.01229169882130673,
+            "precision": 0.679125752296484,
+            "recall": 0.679125752296484,
+            "confusion_matrix": [
+              [
+                2144,
+                1013
+              ],
+              [
+                1013,
+                2144
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6763376036171816,
+            "roc_auc": 0.7485961955308817,
+            "log_loss": 0.5882986030717661,
+            "brier_score": 0.20249122901986608,
+            "expected_calibration_error": 0.009427267180428663,
+            "precision": 0.6763376036171816,
+            "recall": 0.6763376036171816,
+            "confusion_matrix": [
+              [
+                1795,
+                859
+              ],
+              [
+                859,
+                1795
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6938369781312127,
+            "roc_auc": 0.7748301443822156,
+            "log_loss": 0.5668847794585095,
+            "brier_score": 0.19354007050622665,
+            "expected_calibration_error": 0.02740541964613835,
+            "precision": 0.6938369781312127,
+            "recall": 0.6938369781312127,
+            "confusion_matrix": [
+              [
+                349,
+                154
+              ],
+              [
+                154,
+                349
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6750188394875659,
-          "roc_auc": 0.7488823371072882,
-          "log_loss": 0.5883098883977088,
-          "brier_score": 0.2024476071423515,
-          "precision": 0.6741657292838396,
-          "recall": 0.6774679728711379,
-          "confusion_matrix": [
-            [
-              1785,
-              869
-            ],
-            [
-              856,
-              1798
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 0.01593231772641083,
+          "median": 0.01188516616821289,
+          "p95": 0.04429923892021176,
+          "max": 0.13174141943454742
         },
-        "odds_missing": {
-          "accuracy": 0.6998011928429424,
-          "roc_auc": 0.7703836622412642,
-          "log_loss": 0.5711051959050644,
-          "brier_score": 0.19525631428219858,
-          "precision": 0.6998011928429424,
-          "recall": 0.6998011928429424,
-          "confusion_matrix": [
-            [
-              352,
-              151
-            ],
-            [
-              151,
-              352
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "lightgbm": {
-        "all": {
-          "accuracy": 0.6797592651251188,
-          "roc_auc": 0.7520807645578769,
-          "log_loss": 0.5853214512989836,
-          "brier_score": 0.2013292740060731,
-          "precision": 0.6790785736825496,
-          "recall": 0.6816598036110231,
-          "confusion_matrix": [
-            [
-              2140,
-              1017
-            ],
-            [
-              1005,
-              2152
+        "scopes": {
+          "all": {
+            "accuracy": 0.6769084573962623,
+            "roc_auc": 0.7523877885134713,
+            "log_loss": 0.5850076647331531,
+            "brier_score": 0.20123232926233378,
+            "expected_calibration_error": 0.00921918765220412,
+            "precision": 0.6769084573962623,
+            "recall": 0.6769084573962623,
+            "confusion_matrix": [
+              [
+                2137,
+                1020
+              ],
+              [
+                1020,
+                2137
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6737000753579503,
+            "roc_auc": 0.7485287595354497,
+            "log_loss": 0.589158629196236,
+            "brier_score": 0.2027326512817943,
+            "expected_calibration_error": 0.006296532108407919,
+            "precision": 0.6737000753579503,
+            "recall": 0.6737000753579503,
+            "confusion_matrix": [
+              [
+                1788,
+                866
+              ],
+              [
+                866,
+                1788
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6938369781312127,
+            "roc_auc": 0.7727195475259773,
+            "log_loss": 0.5631057568106441,
+            "brier_score": 0.1933161172550807,
+            "expected_calibration_error": 0.03910644062256515,
+            "precision": 0.6938369781312127,
+            "recall": 0.6938369781312127,
+            "confusion_matrix": [
+              [
+                349,
+                154
+              ],
+              [
+                154,
+                349
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6761492087415222,
-          "roc_auc": 0.7483185012002188,
-          "log_loss": 0.5890132591102941,
-          "brier_score": 0.2027085991119107,
-          "precision": 0.675028079371022,
-          "recall": 0.6793519216277317,
-          "confusion_matrix": [
-            [
-              1786,
-              868
-            ],
-            [
-              851,
-              1803
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 3157,
+          "mean": 0.013124789972581919,
+          "median": 0.009422377862629672,
+          "p95": 0.037254048314204403,
+          "max": 0.11558549334659163
         },
-        "odds_missing": {
-          "accuracy": 0.6988071570576541,
-          "roc_auc": 0.7709923362410033,
-          "log_loss": 0.5658422108790665,
-          "brier_score": 0.19405148308978476,
-          "precision": 0.7008032128514057,
-          "recall": 0.6938369781312127,
-          "confusion_matrix": [
-            [
-              354,
-              149
-            ],
-            [
-              154,
-              349
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       }
     },
     "retrospective_2025": {
       "rank_baseline": {
-        "all": {
-          "accuracy": 0.6368402656413842,
-          "roc_auc": 0.6368402656413841,
-          "log_loss": 13.089603590105808,
-          "brier_score": 0.36315973435861587,
-          "precision": 0.6368402656413842,
-          "recall": 0.6368402656413842,
-          "confusion_matrix": [
-            [
-              1822,
-              1039
-            ],
-            [
-              1039,
-              1822
+        "scopes": {
+          "all": {
+            "accuracy": 0.6368402656413842,
+            "roc_auc": 0.6368402656413841,
+            "log_loss": 13.089603590105808,
+            "brier_score": 0.36315973435861587,
+            "expected_calibration_error": 0.3631597343586158,
+            "precision": 0.6368402656413842,
+            "recall": 0.6368402656413842,
+            "confusion_matrix": [
+              [
+                1822,
+                1039
+              ],
+              [
+                1039,
+                1822
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6448,
+            "roc_auc": 0.6448,
+            "log_loss": 12.80270568381441,
+            "brier_score": 0.3552,
+            "expected_calibration_error": 0.35519999999999996,
+            "precision": 0.6448,
+            "recall": 0.6448,
+            "confusion_matrix": [
+              [
+                1612,
+                888
+              ],
+              [
+                888,
+                1612
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.5817174515235457,
+            "roc_auc": 0.5817174515235457,
+            "log_loss": 15.07643119600191,
+            "brier_score": 0.4182825484764543,
+            "expected_calibration_error": 0.4182825484764543,
+            "precision": 0.5817174515235457,
+            "recall": 0.5817174515235457,
+            "confusion_matrix": [
+              [
+                210,
+                151
+              ],
+              [
+                151,
+                210
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6448,
-          "roc_auc": 0.6448,
-          "log_loss": 12.80270568381441,
-          "brier_score": 0.3552,
-          "precision": 0.6448,
-          "recall": 0.6448,
-          "confusion_matrix": [
-            [
-              1612,
-              888
-            ],
-            [
-              888,
-              1612
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "max": 0.0
         },
-        "odds_missing": {
-          "accuracy": 0.5817174515235457,
-          "roc_auc": 0.5817174515235457,
-          "log_loss": 15.07643119600191,
-          "brier_score": 0.4182825484764543,
-          "precision": 0.5817174515235457,
-          "recall": 0.5817174515235457,
-          "confusion_matrix": [
-            [
-              210,
-              151
-            ],
-            [
-              151,
-              210
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "market_baseline": {
-        "all": {
-          "accuracy": 0.6509961551904928,
-          "roc_auc": 0.7171714463000292,
-          "log_loss": 0.6131043780135031,
-          "brier_score": 0.2134084951727722,
-          "precision": 0.6335807050092764,
-          "recall": 0.7161831527437958,
-          "confusion_matrix": [
-            [
-              1676,
-              1185
-            ],
-            [
-              812,
-              2049
+        "scopes": {
+          "all": {
+            "accuracy": 0.6509961551904928,
+            "roc_auc": 0.7171833578670892,
+            "log_loss": 0.613104378013503,
+            "brier_score": 0.2134084951727722,
+            "expected_calibration_error": 0.01637277840323825,
+            "precision": 0.6335807050092764,
+            "recall": 0.7161831527437958,
+            "confusion_matrix": [
+              [
+                1676,
+                1185
+              ],
+              [
+                812,
+                2049
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6728,
+            "roc_auc": 0.7345298399999999,
+            "log_loss": 0.6015461973257968,
+            "brier_score": 0.2081246818757205,
+            "expected_calibration_error": 0.018737007604665873,
+            "precision": 0.6719745222929936,
+            "recall": 0.6752,
+            "confusion_matrix": [
+              [
+                1676,
+                824
+              ],
+              [
+                812,
+                1688
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.5,
+            "roc_auc": 0.5,
+            "log_loss": 0.6931471805599453,
+            "brier_score": 0.25,
+            "expected_calibration_error": 0.0,
+            "precision": 0.5,
+            "recall": 1.0,
+            "confusion_matrix": [
+              [
+                0,
+                361
+              ],
+              [
+                0,
+                361
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6728,
-          "roc_auc": 0.73451424,
-          "log_loss": 0.601546197325797,
-          "brier_score": 0.2081246818757205,
-          "precision": 0.6719745222929936,
-          "recall": 0.6752,
-          "confusion_matrix": [
-            [
-              1676,
-              824
-            ],
-            [
-              812,
-              1688
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 3.806811559445224e-17,
+          "median": 0.0,
+          "p95": 2.220446049250313e-16,
+          "max": 3.3306690738754696e-16
         },
-        "odds_missing": {
-          "accuracy": 0.5,
-          "roc_auc": 0.5,
-          "log_loss": 0.6931471805599453,
-          "brier_score": 0.25,
-          "precision": 0.5,
-          "recall": 1.0,
-          "confusion_matrix": [
-            [
-              0,
-              361
-            ],
-            [
-              0,
-              361
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "logistic_regression": {
-        "all": {
-          "accuracy": 0.6714435512058721,
-          "roc_auc": 0.7247541055506558,
-          "log_loss": 0.6135159707702836,
-          "brier_score": 0.21244909642286597,
-          "precision": 0.6714435512058721,
-          "recall": 0.6714435512058721,
-          "confusion_matrix": [
-            [
-              1921,
-              940
-            ],
-            [
-              940,
-              1921
+        "scopes": {
+          "all": {
+            "accuracy": 0.6714435512058721,
+            "roc_auc": 0.7247541055506558,
+            "log_loss": 0.6135159707702839,
+            "brier_score": 0.21244909642286605,
+            "expected_calibration_error": 0.02977870077062752,
+            "precision": 0.6714435512058721,
+            "recall": 0.6714435512058721,
+            "confusion_matrix": [
+              [
+                1921,
+                940
+              ],
+              [
+                940,
+                1921
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6728,
+            "roc_auc": 0.7286633600000001,
+            "log_loss": 0.609674778790926,
+            "brier_score": 0.21100319148991403,
+            "expected_calibration_error": 0.032571420760646834,
+            "precision": 0.6728,
+            "recall": 0.6728,
+            "confusion_matrix": [
+              [
+                1682,
+                818
+              ],
+              [
+                818,
+                1682
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.6620498614958449,
+            "roc_auc": 0.7139217777641362,
+            "log_loss": 0.6401170232589115,
+            "brier_score": 0.22246228847932023,
+            "expected_calibration_error": 0.07402954039491288,
+            "precision": 0.6620498614958449,
+            "recall": 0.6620498614958449,
+            "confusion_matrix": [
+              [
+                239,
+                122
+              ],
+              [
+                122,
+                239
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6728,
-          "roc_auc": 0.7286633600000001,
-          "log_loss": 0.6096747787909258,
-          "brier_score": 0.21100319148991398,
-          "precision": 0.6728,
-          "recall": 0.6728,
-          "confusion_matrix": [
-            [
-              1682,
-              818
-            ],
-            [
-              818,
-              1682
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 5.134112095421416e-14,
+          "median": 3.8746783559417963e-14,
+          "p95": 1.4210854715202004e-13,
+          "max": 3.3928415632544784e-13
         },
-        "odds_missing": {
-          "accuracy": 0.6620498614958449,
-          "roc_auc": 0.7139217777641362,
-          "log_loss": 0.6401170232589107,
-          "brier_score": 0.22246228847931993,
-          "precision": 0.6620498614958449,
-          "recall": 0.6620498614958449,
-          "confusion_matrix": [
-            [
-              239,
-              122
-            ],
-            [
-              122,
-              239
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "random_forest": {
-        "all": {
-          "accuracy": 0.6775602936036351,
-          "roc_auc": 0.7328727853189875,
-          "log_loss": 0.6042067693926569,
-          "brier_score": 0.2089057882929314,
-          "precision": 0.6771269177126917,
-          "recall": 0.6787836420831876,
-          "confusion_matrix": [
-            [
-              1935,
-              926
-            ],
-            [
-              919,
-              1942
+        "scopes": {
+          "all": {
+            "accuracy": 0.6784341139461727,
+            "roc_auc": 0.73343965374113,
+            "log_loss": 0.6042030040949576,
+            "brier_score": 0.20885855452491947,
+            "expected_calibration_error": 0.02237440139056327,
+            "precision": 0.6784341139461727,
+            "recall": 0.6784341139461727,
+            "confusion_matrix": [
+              [
+                1941,
+                920
+              ],
+              [
+                920,
+                1941
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6732,
+            "roc_auc": 0.7272801600000001,
+            "log_loss": 0.6085853387625946,
+            "brier_score": 0.21084551374504312,
+            "expected_calibration_error": 0.023455407667272502,
+            "precision": 0.6732,
+            "recall": 0.6732,
+            "confusion_matrix": [
+              [
+                1683,
+                817
+              ],
+              [
+                817,
+                1683
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.7146814404432132,
+            "roc_auc": 0.7788000399014741,
+            "log_loss": 0.5738544260642309,
+            "brier_score": 0.1950984491224012,
+            "expected_calibration_error": 0.059174939132046855,
+            "precision": 0.7146814404432132,
+            "recall": 0.7146814404432132,
+            "confusion_matrix": [
+              [
+                258,
+                103
+              ],
+              [
+                103,
+                258
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6726,
-          "roc_auc": 0.72798752,
-          "log_loss": 0.6076983140962441,
-          "brier_score": 0.21050905569365477,
-          "precision": 0.6722554890219561,
-          "recall": 0.6736,
-          "confusion_matrix": [
-            [
-              1679,
-              821
-            ],
-            [
-              816,
-              1684
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 0.022144147045219123,
+          "median": 0.01856092422531397,
+          "p95": 0.055735154489074734,
+          "max": 0.12015841928109716
         },
-        "odds_missing": {
-          "accuracy": 0.7119113573407202,
-          "roc_auc": 0.7690318521189985,
-          "log_loss": 0.5800270969301428,
-          "brier_score": 0.197802828454127,
-          "precision": 0.7107438016528925,
-          "recall": 0.7146814404432132,
-          "confusion_matrix": [
-            [
-              256,
-              105
-            ],
-            [
-              103,
-              258
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "xgboost": {
-        "all": {
-          "accuracy": 0.6730164278224398,
-          "roc_auc": 0.7378970232199813,
-          "log_loss": 0.5983834891103261,
-          "brier_score": 0.2069842131577243,
-          "precision": 0.6716366158113731,
-          "recall": 0.6770360013981126,
-          "confusion_matrix": [
-            [
-              1914,
-              947
-            ],
-            [
-              924,
-              1937
+        "scopes": {
+          "all": {
+            "accuracy": 0.6731911918909472,
+            "roc_auc": 0.7397801503447452,
+            "log_loss": 0.5968079213510474,
+            "brier_score": 0.20630672493206254,
+            "expected_calibration_error": 0.011285474574032532,
+            "precision": 0.6731911918909472,
+            "recall": 0.6731911918909472,
+            "confusion_matrix": [
+              [
+                1926,
+                935
+              ],
+              [
+                935,
+                1926
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6688,
+            "roc_auc": 0.7322457599999999,
+            "log_loss": 0.6046628916584654,
+            "brier_score": 0.20928940468811758,
+            "expected_calibration_error": 0.015079381532967085,
+            "precision": 0.6688,
+            "recall": 0.6688,
+            "confusion_matrix": [
+              [
+                1672,
+                828
+              ],
+              [
+                828,
+                1672
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.703601108033241,
+            "roc_auc": 0.7887447149730281,
+            "log_loss": 0.5424106200531397,
+            "brier_score": 0.18565104795107182,
+            "expected_calibration_error": 0.03165215413780093,
+            "precision": 0.703601108033241,
+            "recall": 0.703601108033241,
+            "confusion_matrix": [
+              [
+                254,
+                107
+              ],
+              [
+                107,
+                254
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6694,
-          "roc_auc": 0.73158736,
-          "log_loss": 0.6053209614501885,
-          "brier_score": 0.20955810009476467,
-          "precision": 0.6678557273087594,
-          "recall": 0.674,
-          "confusion_matrix": [
-            [
-              1662,
-              838
-            ],
-            [
-              815,
-              1685
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 0.014956852566347968,
+          "median": 0.011071830987930298,
+          "p95": 0.04360654950141907,
+          "max": 0.15687063336372375
         },
-        "odds_missing": {
-          "accuracy": 0.6980609418282548,
-          "roc_auc": 0.7802579783764704,
-          "log_loss": 0.5503400518536595,
-          "brier_score": 0.18915951137766626,
-          "precision": 0.6980609418282548,
-          "recall": 0.6980609418282548,
-          "confusion_matrix": [
-            [
-              252,
-              109
-            ],
-            [
-              109,
-              252
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       },
       "lightgbm": {
-        "all": {
-          "accuracy": 0.6786088780146802,
-          "roc_auc": 0.7396125332164737,
-          "log_loss": 0.5969456755616487,
-          "brier_score": 0.2064741899374851,
-          "precision": 0.6776773296244785,
-          "recall": 0.6812303390422929,
-          "confusion_matrix": [
-            [
-              1934,
-              927
-            ],
-            [
-              912,
-              1949
+        "scopes": {
+          "all": {
+            "accuracy": 0.6756378888500524,
+            "roc_auc": 0.7388837896522322,
+            "log_loss": 0.5973244397153776,
+            "brier_score": 0.20664737258695184,
+            "expected_calibration_error": 0.018592977868554336,
+            "precision": 0.6756378888500524,
+            "recall": 0.6756378888500524,
+            "confusion_matrix": [
+              [
+                1933,
+                928
+              ],
+              [
+                928,
+                1933
+              ]
             ]
-          ]
+          },
+          "odds_available": {
+            "accuracy": 0.6708,
+            "roc_auc": 0.7313944,
+            "log_loss": 0.6057286793823139,
+            "brier_score": 0.20968220240614188,
+            "expected_calibration_error": 0.02280880698394657,
+            "precision": 0.6708,
+            "recall": 0.6708,
+            "confusion_matrix": [
+              [
+                1677,
+                823
+              ],
+              [
+                823,
+                1677
+              ]
+            ]
+          },
+          "odds_missing": {
+            "accuracy": 0.7091412742382271,
+            "roc_auc": 0.7879466854919775,
+            "log_loss": 0.5391233339886727,
+            "brier_score": 0.18563054558425116,
+            "expected_calibration_error": 0.017552400802802973,
+            "precision": 0.7091412742382271,
+            "recall": 0.7091412742382271,
+            "confusion_matrix": [
+              [
+                256,
+                105
+              ],
+              [
+                105,
+                256
+              ]
+            ]
+          }
         },
-        "odds_available": {
-          "accuracy": 0.6746,
-          "roc_auc": 0.7320665599999999,
-          "log_loss": 0.6054523877459796,
-          "brier_score": 0.2095428775760326,
-          "precision": 0.673558648111332,
-          "recall": 0.6776,
-          "confusion_matrix": [
-            [
-              1679,
-              821
-            ],
-            [
-              806,
-              1694
-            ]
-          ]
+        "symmetry_gap": {
+          "match_count": 2861,
+          "mean": 0.012539118561349582,
+          "median": 0.009218731619562215,
+          "p95": 0.03620179483098607,
+          "max": 0.17300226037264577
         },
-        "odds_missing": {
-          "accuracy": 0.7063711911357341,
-          "roc_auc": 0.7881308461414507,
-          "log_loss": 0.5380349263626809,
-          "brier_score": 0.18522289050156057,
-          "precision": 0.7063711911357341,
-          "recall": 0.7063711911357341,
-          "confusion_matrix": [
-            [
-              255,
-              106
-            ],
-            [
-              106,
-              255
-            ]
-          ]
-        }
+        "evaluation_method": "production_two_perspective_average"
       }
     }
   }

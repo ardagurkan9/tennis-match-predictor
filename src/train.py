@@ -1,6 +1,10 @@
 """Model training utilities."""
 
 import argparse
+import importlib.metadata
+import json
+import platform
+import sys
 from pathlib import Path
 
 import joblib
@@ -29,6 +33,8 @@ NON_FEATURE_COLUMNS = [
     "opponent_ioc",
     "ioc_matchup",
     "draw_size",
+    "odds_match_confidence",
+    "odds_match_method",
 ]
 
 DATASET_DIRECTORIES = {
@@ -201,7 +207,43 @@ def save_model(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, output_path)
+    metadata = {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "packages": {
+            package: importlib.metadata.version(package)
+            for package in (
+                "pandas",
+                "numpy",
+                "scikit-learn",
+                "joblib",
+                "xgboost",
+                "lightgbm",
+            )
+        },
+    }
+    (output_path.parent / "training_environment.json").write_text(
+        json.dumps(metadata, indent=2), encoding="utf-8"
+    )
     return output_path
+
+
+def evaluate_production_classifier(
+    model: Pipeline,
+    data: pd.DataFrame,
+) -> dict[str, object]:
+    """Evaluate with the same two-perspective averaging used by inference."""
+    from src.report import calculate_metrics, symmetric_match_probabilities
+
+    features, target = split_features_and_target(data)
+    direct_probability = model.predict_proba(features)[:, 1]
+    probability, symmetry_gap = symmetric_match_probabilities(
+        data, direct_probability
+    )
+    return {
+        **calculate_metrics(target, probability),
+        "symmetry_gap": symmetry_gap,
+    }
 
 
 def train_logistic_regression(
@@ -212,15 +254,13 @@ def train_logistic_regression(
     train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
-    x_validation, y_validation = split_features_and_target(validation)
-    x_test, y_test = split_features_and_target(test)
 
     model = build_logistic_regression_model()
     model.fit(x_train, y_train)
 
     metrics = {
-        "validation": evaluate_classifier(model, x_validation, y_validation),
-        "test": evaluate_classifier(model, x_test, y_test),
+        "validation": evaluate_production_classifier(model, validation),
+        "retrospective_benchmark": evaluate_production_classifier(model, test),
     }
     model_path = save_model(model, output_path=Path(model_dir) / "logistic_regression.pkl")
 
@@ -235,15 +275,13 @@ def train_random_forest(
     train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
-    x_validation, y_validation = split_features_and_target(validation)
-    x_test, y_test = split_features_and_target(test)
 
     model = build_random_forest_model()
     model.fit(x_train, y_train)
 
     metrics = {
-        "validation": evaluate_classifier(model, x_validation, y_validation),
-        "test": evaluate_classifier(model, x_test, y_test),
+        "validation": evaluate_production_classifier(model, validation),
+        "retrospective_benchmark": evaluate_production_classifier(model, test),
     }
     model_path = save_model(model, output_path=Path(model_dir) / "random_forest.pkl")
 
@@ -258,15 +296,13 @@ def train_xgboost(
     train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
-    x_validation, y_validation = split_features_and_target(validation)
-    x_test, y_test = split_features_and_target(test)
 
     model = build_xgboost_model()
     model.fit(x_train, y_train)
 
     metrics = {
-        "validation": evaluate_classifier(model, x_validation, y_validation),
-        "test": evaluate_classifier(model, x_test, y_test),
+        "validation": evaluate_production_classifier(model, validation),
+        "retrospective_benchmark": evaluate_production_classifier(model, test),
     }
     model_path = save_model(model, output_path=Path(model_dir) / "xgboost.pkl")
 
@@ -281,15 +317,13 @@ def train_lightgbm(
     train, validation, test = load_split_data_from_directory(data_dir)
 
     x_train, y_train = split_features_and_target(train)
-    x_validation, y_validation = split_features_and_target(validation)
-    x_test, y_test = split_features_and_target(test)
 
     model = build_lightgbm_model()
     model.fit(x_train, y_train)
 
     metrics = {
-        "validation": evaluate_classifier(model, x_validation, y_validation),
-        "test": evaluate_classifier(model, x_test, y_test),
+        "validation": evaluate_production_classifier(model, validation),
+        "retrospective_benchmark": evaluate_production_classifier(model, test),
     }
     model_path = save_model(model, output_path=Path(model_dir) / "lightgbm.pkl")
 
@@ -298,7 +332,7 @@ def train_lightgbm(
 
 def print_model_report(
     model_name: str,
-    metrics: dict[str, dict[str, float]],
+    metrics: dict[str, dict[str, object]],
     model_path: Path,
 ) -> None:
     """Print model training and evaluation results."""
@@ -313,6 +347,10 @@ def print_model_report(
                 print(f"{metric_name}:")
                 print(f"  {metric_value[0]}")
                 print(f"  {metric_value[1]}")
+            elif metric_name == "symmetry_gap":
+                print("symmetry_gap:")
+                for gap_name, gap_value in metric_value.items():
+                    print(f"  {gap_name}: {gap_value:.4f}")
             else:
                 print(f"{metric_name}: {metric_value:.4f}")
 
