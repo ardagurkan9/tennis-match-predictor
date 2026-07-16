@@ -77,10 +77,14 @@ tennis-match-predictor/
 │   ├── evaluate.py
 │   ├── ablation.py
 │   ├── report.py
-│   └── predict.py
+│   ├── predict.py
+│   ├── match_history.py
+│   └── comparison.py
 ├── tests/
 │   ├── test_leakage.py
-│   └── test_prediction.py
+│   ├── test_prediction.py
+│   └── test_frontend.py
+├── app.py
 ├── main.py
 ├── requirements.txt
 └── README.md
@@ -214,6 +218,20 @@ Optional `--player-odds` and `--opponent-odds` values add a vig-free market
 probability. If both are omitted, the model uses neutral market inputs and marks
 odds as unavailable.
 
+## Streamlit Frontend
+
+A small Streamlit UI at `app.py` wraps `src.predict.predict_match()` with a
+match-selection form, a color-coded stat comparison, player profiles, recent
+form, and head-to-head history. It does not use live data or reimplement any
+feature/prediction logic; it only calls the existing prediction pipeline.
+
+Install dependencies (includes `streamlit`) and run:
+
+```bash
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
 ## Outputs
 
 The pipeline writes generated datasets, model artifacts, and reports to these
@@ -249,8 +267,8 @@ The 2025 data was inspected during feature development, so it is not presented a
 an untouched final test set. Ablation decisions use expanding-window validation
 over 2020–2024; a future untouched year is required for a new final test.
 
-The prediction CLI, automated leakage tests, and persistent evaluation reports are
-available. A graphical frontend, broader odds-matching audit, and automated
-feature-symmetry coverage are still planned.
+The prediction CLI, a Streamlit graphical frontend, automated leakage tests, and
+persistent evaluation reports are available. A broader odds-matching audit and
+automated feature-symmetry coverage are still planned.
 
 For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).

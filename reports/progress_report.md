@@ -133,13 +133,33 @@ The saved models under `models/advanced/` were verified against the current adva
 
 The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 test ROC-AUC. The current saved LightGBM reaches **0.6786 test accuracy** and **0.7396 test ROC-AUC**.
 
+## Latest Addition: Streamlit Frontend
+
+- `app.py` is a thin Streamlit presentation layer over `src.predict.predict_match()`; it
+  builds no feature or prediction logic of its own.
+- `src/predict.py` gained two small additive helpers to support the frontend without
+  changing its existing API or CLI behavior: `latest_match_date()` (dataset cutoff for
+  the default match-date picker) and `load_model()` (a cacheable model loader, now used
+  internally by `predict_match()` via an optional `model` argument).
+- `src/match_history.py` and `src/comparison.py` are new, independently testable helper
+  modules: the former derives a player's recent-form and head-to-head match lists from
+  raw history (strictly before the selected match date), and the latter implements the
+  frontend's color-coding rules (higher/lower-is-better, equal, missing) plus the
+  one-hot-to-categorical recovery needed to display `player_hand` (which
+  `encode_categorical_features` one-hot encodes away).
+- Raw match data, the player list, and the loaded model are cached with
+  `st.cache_resource`; predictions are cached with `st.cache_data` keyed on the match
+  parameters, so repeated predictions and UI interactions don't reload the ~million-row
+  history or the model from disk.
+- The frontend explicitly disclaims live data and surfaces `symmetry_gap` as a
+  low-confidence warning above 0.10, rather than as a headline metric.
+
 ## Remaining Work
 
 ### Graphical Prediction Interface
 
-- `src/predict.py` provides future-match feature generation and a working CLI.
-- A Streamlit frontend and optional API layer are still planned.
-- Rebuilding historical state takes several seconds and should be cached by the frontend.
+- The Streamlit frontend covers the core prediction, stat-comparison, and history
+  workflow. An optional API layer is still not implemented.
 
 ### Reproducibility and Validation
 
@@ -171,6 +191,7 @@ The previous advanced LightGBM benchmark had 0.6669 test accuracy and 0.7267 tes
 | Persistent model evaluation report                 | Done    |
 | Future-match feature builder                       | Done    |
 | Prediction CLI                                     | Done    |
-| Streamlit frontend / API                           | Pending |
+| Streamlit frontend                                 | Done    |
+| Optional API layer                                 | Pending |
 | Leakage regression tests                           | Done |
 | Odds-match audit and broader automated tests       | Pending |
