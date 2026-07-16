@@ -134,7 +134,6 @@ def cached_predict(
     tourney_level: str,
     best_of: int,
     round_name: str,
-    draw_size: int,
     player_odds: float | None,
     opponent_odds: float | None,
 ) -> PredictionResult:
@@ -147,7 +146,6 @@ def cached_predict(
         tourney_level=tourney_level,
         best_of=best_of,
         round_name=round_name,
-        draw_size=draw_size,
         player_odds=player_odds,
         opponent_odds=opponent_odds,
         model=_model,
@@ -386,15 +384,13 @@ def main() -> None:
         with col5:
             best_of = st.selectbox("Best of", options=[3, 5])
 
-        col6, col7, col8 = st.columns(3)
+        col6, col7 = st.columns(2)
         with col6:
             tourney_level_label = st.selectbox("Tournament level", options=list(TOURNEY_LEVELS.values()))
             tourney_level = next(code for code, label in TOURNEY_LEVELS.items() if label == tourney_level_label)
         with col7:
             round_label = st.selectbox("Round", options=list(ROUNDS.values()), index=2)
             round_name = next(code for code, label in ROUNDS.items() if label == round_label)
-        with col8:
-            draw_size = st.number_input("Draw size", min_value=2, max_value=256, value=32, step=1)
 
         col9, col10 = st.columns(2)
         with col9:
@@ -435,7 +431,6 @@ def main() -> None:
                         tourney_level,
                         int(best_of),
                         round_name,
-                        int(draw_size),
                         player_odds,
                         opponent_odds,
                     )

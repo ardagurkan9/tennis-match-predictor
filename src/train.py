@@ -28,6 +28,7 @@ NON_FEATURE_COLUMNS = [
     "player_ioc",
     "opponent_ioc",
     "ioc_matchup",
+    "draw_size",
 ]
 
 DATASET_DIRECTORIES = {

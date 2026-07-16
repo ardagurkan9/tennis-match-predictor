@@ -173,7 +173,6 @@ def build_future_raw_match(
     tourney_level: str = "A",
     best_of: int = 3,
     round_name: str = "R32",
-    draw_size: int = 32,
     player_odds: float | None = None,
     opponent_odds: float | None = None,
 ) -> pd.DataFrame:
@@ -200,7 +199,6 @@ def build_future_raw_match(
             "tourney_id": f"{FUTURE_TOURNEY_ID_PREFIX}-{match_date:%Y%m%d}",
             "tourney_name": "Future Match",
             "surface": surface,
-            "draw_size": draw_size,
             "tourney_level": tourney_level,
             "tourney_date": int(match_date.strftime("%Y%m%d")),
             "match_num": FUTURE_MATCH_NUM,
@@ -235,7 +233,6 @@ def build_future_match_features(
     tourney_level: str = "A",
     best_of: int = 3,
     round_name: str = "R32",
-    draw_size: int = 32,
     player_odds: float | None = None,
     opponent_odds: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
@@ -272,7 +269,6 @@ def build_future_match_features(
         "tourney_id": f"{FUTURE_TOURNEY_ID_PREFIX}-{match_date:%Y%m%d}",
         "tourney_name": "Future Match",
         "surface": surface,
-        "draw_size": draw_size,
         "tourney_level": tourney_level,
         "tourney_date": match_date,
         "match_num": FUTURE_MATCH_NUM,
@@ -504,7 +500,6 @@ def predict_match(
     tourney_level: str = "A",
     best_of: int = 3,
     round_name: str = "R32",
-    draw_size: int = 32,
     player_odds: float | None = None,
     opponent_odds: float | None = None,
     model_path: str | Path = DEFAULT_MODEL_PATH,
@@ -526,7 +521,6 @@ def predict_match(
         tourney_level=tourney_level,
         best_of=best_of,
         round_name=round_name,
-        draw_size=draw_size,
         player_odds=player_odds,
         opponent_odds=opponent_odds,
     )
@@ -570,7 +564,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tourney-level", default="A")
     parser.add_argument("--best-of", type=int, choices=(3, 5), default=3)
     parser.add_argument("--round", dest="round_name", default="R32")
-    parser.add_argument("--draw-size", type=int, default=32)
     parser.add_argument("--player-odds", type=float)
     parser.add_argument("--opponent-odds", type=float)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL_PATH)
@@ -590,7 +583,6 @@ def main() -> None:
         tourney_level=args.tourney_level,
         best_of=args.best_of,
         round_name=args.round_name,
-        draw_size=args.draw_size,
         player_odds=args.player_odds,
         opponent_odds=args.opponent_odds,
         model_path=args.model,

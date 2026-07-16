@@ -210,8 +210,7 @@ python -m src.predict \
   --date 2026-01-15 \
   --tourney-level G \
   --best-of 5 \
-  --round SF \
-  --draw-size 128
+  --round SF
 ```
 
 Optional `--player-odds` and `--opponent-odds` values add a vig-free market
