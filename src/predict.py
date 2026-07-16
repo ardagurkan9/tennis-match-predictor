@@ -94,6 +94,19 @@ def list_available_players(raw_matches: pd.DataFrame) -> list[str]:
     return sorted(name for name in names.astype(str).unique() if name.strip())
 
 
+def latest_match_date(raw_matches: pd.DataFrame) -> pd.Timestamp:
+    """Return the most recent tourney_date present in a raw match history."""
+    return _raw_match_dates(raw_matches).max()
+
+
+def load_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> object:
+    """Load a trained model artifact from disk, raising a clear error if missing."""
+    model_path = Path(model_path)
+    if not model_path.exists():
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+    return joblib.load(model_path)
+
+
 def _player_appearances(raw_matches: pd.DataFrame, player_name: str) -> pd.DataFrame:
     """Normalize a player's winner/loser appearances into one chronological table."""
     frames = []
@@ -495,9 +508,15 @@ def predict_match(
     player_odds: float | None = None,
     opponent_odds: float | None = None,
     model_path: str | Path = DEFAULT_MODEL_PATH,
+    model: object | None = None,
 ) -> PredictionResult:
-    """Predict a future match from both perspectives and enforce a symmetric result."""
-    model = joblib.load(model_path)
+    """Predict a future match from both perspectives and enforce a symmetric result.
+
+    Pass a pre-loaded `model` (e.g. from a cached `load_model()` call) to avoid
+    reloading the model artifact from disk on every prediction.
+    """
+    if model is None:
+        model = load_model(model_path)
     player_row, opponent_row, data_cutoff = build_future_match_features(
         raw_matches=raw_matches,
         player=player,
