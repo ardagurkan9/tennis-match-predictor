@@ -11,3 +11,4 @@ ipykernel
 openpyxl
 xlrd
 pytest
+streamlit

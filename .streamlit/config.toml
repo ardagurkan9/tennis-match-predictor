@@ -1,0 +1,28 @@
+# Design system generated via the ui-ux-pro-max skill for a data-dense
+# analytics/dashboard tool, adapted to a tennis-court green brand color
+# (kept a shade darker/more muted than the semantic "advantage" green used
+# in stat comparisons, so brand color and win/loss meaning don't collide).
+[theme]
+font = "Fira Sans:https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap"
+baseRadius = "0.75rem"
+showWidgetBorder = true
+
+[theme.light]
+primaryColor = "#15803D"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#EAF3EC"
+textColor = "#14532D"
+borderColor = "#D1E7D5"
+greenColor = "#16A34A"
+redColor = "#DC2626"
+orangeColor = "#D97706"
+
+[theme.dark]
+primaryColor = "#34D399"
+backgroundColor = "#0D1F14"
+secondaryBackgroundColor = "#16281B"
+textColor = "#E4F1E8"
+borderColor = "#2F4A38"
+greenColor = "#4ADE80"
+redColor = "#F87171"
+orangeColor = "#FBBF24"
