@@ -2,59 +2,202 @@
 
 [![CI](https://github.com/ardagurkan9/tennis-match-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/ardagurkan9/tennis-match-predictor/actions/workflows/ci.yml)
 
-An end-to-end machine learning pipeline for predicting professional ATP tennis match outcomes using historical match data and pre-match betting odds.
+An end-to-end machine learning pipeline for predicting professional ATP tennis match outcomes using historical match data, player form, Elo ratings, match statistics, and pre-match betting odds.
 
-The project focuses on reproducible, time-aware and leakage-free feature engineering. Each match is represented from both players' perspectives, and the model predicts whether the selected player wins:
+The project is designed around chronological data processing and leakage-free feature engineering. Every prediction uses only information that would have been available before the match started.
 
-```text
-target_win = 1 if player wins
-target_win = 0 if opponent wins
+## Results
+
+The production model uses LightGBM with predictions averaged across both player perspectives.
+
+| Dataset                        | Accuracy | ROC-AUC | Log Loss | Brier Score |
+| ------------------------------ | -------: | ------: | -------: | ----------: |
+| Validation — 2024              |   67.69% |  75.24% |   0.5850 |      0.2012 |
+| Retrospective benchmark — 2025 |   67.56% |  73.89% |   0.5973 |      0.2066 |
+
+The 2025 dataset was inspected during development and is therefore reported as a retrospective benchmark rather than an untouched final test set.
+
+## Project Highlights
+
+* Historical ATP match processing from 2000 through 2025
+* Chronological train, validation, and benchmark splits
+* Leakage-free rolling feature engineering
+* Overall and surface-specific Elo ratings
+* Recent-form and surface-form statistics
+* Head-to-head and surface head-to-head features
+* Rolling serve and return performance
+* Player workload and rest-day features
+* Vig-free market probabilities from pre-match betting odds
+* Logistic Regression, Random Forest, XGBoost, and LightGBM models
+* Expanding-window ablation analysis
+* Automated leakage, prediction, and frontend tests
+* Streamlit prediction interface
+* Docker and GitHub Actions support
+
+## Demo
+
+The Streamlit application allows users to select two players and configure a hypothetical matchup.
+
+The interface displays:
+
+* Predicted win probabilities
+* Player profile information
+* Recent form
+* Head-to-head history
+* Side-by-side statistical comparisons
+* Dataset freshness and confidence warnings
+
+```bash
+streamlit run app.py
 ```
 
-## Key Features
+> Add a screenshot or short GIF of the Streamlit interface here.
 
-* ATP match history from 2000 through 2025
-* Time-based train, validation and test splits
-* Rolling recent-form and surface-form statistics
-* Overall and surface-specific head-to-head features
-* Elo and surface Elo ratings
-* Rolling serve and return statistics
-* Player workload and rest features
-* Vig-free pre-match market probabilities
-* Logistic Regression, Random Forest, XGBoost and LightGBM models
+## How It Works
 
-All chronological features use only information available before the predicted match. Current-match scores and serve statistics are excluded from model inputs.
-
-## Pipeline Overview
-
-`main.py` is the central entry point for both data pipelines. Its default `clean` mode runs the ingestion and cleaning check:
+The project processes raw ATP match files chronologically, builds pre-match player histories, creates model-ready datasets, trains multiple models, and evaluates predictions on future seasons.
 
 ```text
-main.py clean
-└── ingest.py → clean.py → cleaned_matches.parquet
+Raw ATP matches and betting odds
+                |
+                v
+      Ingestion and cleaning
+                |
+                v
+ Chronological feature engineering
+                |
+                v
+    Time-based dataset splitting
+                |
+                v
+     Model training and evaluation
+                |
+                v
+       CLI and Streamlit prediction
 ```
 
-Its `advanced` mode delegates to the advanced dataset builder:
+Each historical match is represented from both player perspectives:
 
 ```text
-main.py advanced → build_advanced_features.py
-├── ingest.py
-├── features.py (rolling serve/return history)
-├── odds.py (pre-match market probabilities)
-├── clean.py
-├── features.py (form, H2H, workload, Elo and matchup features)
-└── split.py → advanced train/validation/test files
+target_win = 1 if the selected player wins
+target_win = 0 if the selected player loses
 ```
 
-Model training, baseline evaluation, ablation, and persistent reporting are
-explicit separate steps:
+The final matchup probability combines both direct predictions:
 
 ```text
-train.py    → trained model files
-evaluate.py → rank-baseline metrics
-ablation.py → time-based market-feature ablation reports
-report.py   → model metrics and diagnostic plots
+P(A beats B) =
+    (direct P(A beats B) + 1 - direct P(B beats A)) / 2
 ```
+
+This reduces sensitivity to player ordering and exposes prediction asymmetry.
+
+## Data Split
+
+Random train-test splitting is not used because tennis results are time-dependent.
+
+| Purpose                    | Years     | Used as model rows? |
+| -------------------------- | --------- | ------------------- |
+| Historical feature warm-up | 2000–2014 | No                  |
+| Training                   | 2015–2023 | Yes                 |
+| Validation                 | 2024      | Yes                 |
+| Retrospective benchmark    | 2025      | Yes                 |
+
+Matches from 2000–2014 initialize rolling statistics, Elo ratings, head-to-head records, and player histories. Their rows are not used for model training.
+
+## Leakage Prevention
+
+All chronological features are calculated using only matches completed before the predicted match.
+
+The model does not use:
+
+* Current-match scores
+* Current-match serve statistics
+* Post-match rankings
+* Future player form
+* Future head-to-head results
+* Random data splitting
+
+Automated regression tests verify important temporal and prediction invariants.
+
+## Feature Groups
+
+### Player strength
+
+* ATP ranking and ranking difference
+* Elo rating difference
+* Surface-specific Elo difference
+
+### Recent form
+
+* Overall recent win rate
+* Surface-specific recent win rate
+* Rolling match counts
+
+### Serve and return performance
+
+* First-serve percentage
+* First-serve points won
+* Second-serve points won
+* Break points saved
+* Return performance
+
+### Matchup history
+
+* Overall head-to-head record
+* Surface-specific head-to-head record
+* Previous meetings
+
+### Workload and recovery
+
+* Days since previous match
+* Recent matches played
+* Recent sets and games played
+
+### Market information
+
+* Vig-free implied win probabilities
+* Auditable odds matching method
+* Odds matching confidence
+
+## Models
+
+The training pipeline compares:
+
+* Logistic Regression
+* Random Forest
+* XGBoost
+* LightGBM
+
+LightGBM is currently used as the production model.
+
+The ablation pipeline compares:
+
+* Ranking baseline
+* Market baseline
+* Market-only LightGBM
+* Tennis-feature-only LightGBM
+* Full LightGBM model
+
+Experiment selection uses expanding-window validation over historical seasons rather than the 2025 benchmark.
+
+## Architecture
+
+| Module                    | Responsibility                                          |
+| ------------------------- | ------------------------------------------------------- |
+| `ingest`                  | Load and combine historical ATP data                    |
+| `clean`                   | Validate and normalize match records                    |
+| `odds`                    | Match betting odds and calculate vig-free probabilities |
+| `features`                | Build rolling player and matchup features               |
+| `build_advanced_features` | Coordinate the advanced feature pipeline                |
+| `split`                   | Create chronological datasets                           |
+| `train`                   | Train and save model candidates                         |
+| `evaluate`                | Evaluate ranking baselines                              |
+| `ablation`                | Compare feature groups and model configurations         |
+| `report`                  | Generate metrics and diagnostic plots                   |
+| `predict`                 | Produce matchup predictions                             |
+| `match_history`           | Retrieve player history and matchup context             |
+| `comparison`              | Build player comparison data for the frontend           |
 
 ## Project Structure
 
@@ -67,7 +210,10 @@ tennis-match-predictor/
 │   └── features/
 │       └── advanced/
 ├── models/
+│   └── advanced/
 ├── reports/
+├── scripts/
+│   └── download_model.py
 ├── src/
 │   ├── ingest.py
 │   ├── clean.py
@@ -88,160 +234,106 @@ tennis-match-predictor/
 │   └── test_frontend.py
 ├── app.py
 ├── main.py
+├── Dockerfile
+├── Makefile
+├── pyproject.toml
 ├── requirements.txt
+├── requirements.lock
 └── README.md
 ```
 
-## Data Split
+## Getting Started
 
-Random splitting is not used because tennis data is time-dependent.
+### Requirements
 
-| Purpose | Years | Used as model rows? |
-|---|---|---|
-| Historical feature warm-up | 2000–2014 | No |
-| Train | 2015–2023 | Yes |
-| Validation | 2024 | Yes |
-| Retrospective test | 2025 | Yes |
+* Python 3.11 or 3.12
+* Historical ATP match CSV files
+* Historical betting-odds workbooks for market features
 
-All raw ATP CSV files from 2000 onward are processed chronologically. Matches from
-2000–2014 initialize rolling form, serve statistics, H2H, Elo, and surface Elo, but
-their rows are removed before model training. Modeling starts in 2015 because the
-historical odds dataset covers 2015–2025.
+### Installation
 
-## Installation
+Clone the repository:
 
-Python 3.11 or 3.12 is supported. Dependency versions are pinned in
-`requirements.txt` and captured in `requirements.lock`; the Python constraint
-and tool configuration live in `pyproject.toml`.
+```bash
+git clone https://github.com/ardagurkan9/tennis-match-predictor.git
+cd tennis-match-predictor
+```
 
-Create and activate a virtual environment, then install the dependencies.
+Create a virtual environment.
+
+macOS or Linux:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
 Windows PowerShell:
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
 ```
 
-macOS/Linux:
+Install dependencies:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Raw ATP CSV files belong in `data/raw/`. Historical odds workbooks belong in `data/raw/odds/`.
-
-On systems with `make`, dependency setup is one command:
+On systems with GNU Make:
 
 ```bash
 make setup
 ```
 
-## Production Model
+Place ATP match files in:
 
-The binary model artifact is intentionally not stored in Git. Download the
-`lightgbm.pkl` release asset before starting the application:
-
-```bash
-python scripts/download_model.py
+```text
+data/raw/
 ```
 
-Maintainers must attach `models/advanced/lightgbm.pkl` as `lightgbm.pkl` to a
-GitHub Release for the default URL to work. A custom mirror can be selected with
-`--url`, and `--sha256` verifies a published checksum.
+Place historical odds files in:
 
-If no release asset is available, build the dataset and train locally:
-
-```bash
-python main.py advanced
-python -m src.train --dataset advanced
+```text
+data/raw/odds/
 ```
 
-The CLI and Streamlit app fail early with these recovery commands when the model
-is absent.
+## Running the Pipeline
 
-## Usage
-
-Recommended advanced workflow:
+Run the basic ingestion and cleaning pipeline:
 
 ```bash
-python main.py advanced
-python -m src.train --dataset advanced
-python -m src.ablation
-python -m src.report
-python -m pytest
+python main.py clean
 ```
 
-The commands below can also be run independently.
-
-Run the ingestion and cleaning check (the default mode):
-
-```bash
-python main.py
-# equivalent to: python main.py clean
-```
-
-Build the advanced feature dataset and its time-based splits:
+Build the advanced feature datasets:
 
 ```bash
 python main.py advanced
 ```
 
-Create base dataset splits:
+Train the advanced models:
 
 ```bash
-python -m src.split
-```
-
-Train model candidates using either dataset:
-
-```bash
-# Base features
-python -m src.train
-
-# Advanced features; models are saved under models/advanced/
 python -m src.train --dataset advanced
 ```
 
-Evaluate the rank baseline using either dataset:
-
-```bash
-python -m src.evaluate
-python -m src.evaluate --dataset advanced
-```
-
-Run the market-feature ablation with expanding-window cross-validation:
+Run the ablation analysis:
 
 ```bash
 python -m src.ablation
 ```
 
-This compares rank baseline, market baseline, market-only LightGBM, tennis-only
-LightGBM, and the full model. The 2025 result is labeled as a retrospective
-benchmark and is not used for experiment selection.
-
-Run the automated leakage regression tests:
-
-```bash
-python -m pytest
-```
-
-Run lint checks:
-
-```bash
-python -m ruff check .
-```
-
-Generate persistent model metrics and diagnostic plots:
+Generate reports and diagnostic plots:
 
 ```bash
 python -m src.report
 ```
 
-Predict a new matchup from historical state:
+## Prediction
+
+Predict a hypothetical matchup:
 
 ```bash
 python -m src.predict \
@@ -254,96 +346,131 @@ python -m src.predict \
   --round SF
 ```
 
-Optional `--player-odds` and `--opponent-odds` values add a vig-free market
-probability. If both are omitted, the model uses neutral market inputs and marks
-odds as unavailable.
-
-## Streamlit Frontend
-
-A small Streamlit UI at `app.py` wraps `src.predict.predict_match()` with a
-match-selection form, a color-coded stat comparison, player profiles, recent
-form, and head-to-head history. It does not use live data or reimplement any
-feature/prediction logic; it only calls the existing prediction pipeline.
-
-Install dependencies (includes `streamlit`) and run:
+Optional market odds can be supplied:
 
 ```bash
-python -m pip install -r requirements.txt
-streamlit run app.py
+python -m src.predict \
+  --player "Carlos Alcaraz" \
+  --opponent "Jannik Sinner" \
+  --surface Hard \
+  --date 2026-01-15 \
+  --player-odds 1.70 \
+  --opponent-odds 2.20
 ```
 
-The UI shows the dataset cutoff and marks predictions as low-confidence when the
-history is more than 180 days old. Displayed probabilities are estimates, not
-guarantees; live rankings, injuries and form are unavailable.
+When odds are omitted, the model uses neutral market inputs and marks market data as unavailable.
 
-Docker is also supported after the model has been downloaded:
+## Production Model
+
+Model binaries are intentionally excluded from Git.
+
+Download the published LightGBM release asset:
+
+```bash
+python scripts/download_model.py
+```
+
+Alternatively, rebuild the dataset and train the model locally:
+
+```bash
+python main.py advanced
+python -m src.train --dataset advanced
+```
+
+The CLI and Streamlit application provide recovery instructions when the model artifact is missing.
+
+## Testing and Quality
+
+Run the complete test suite:
+
+```bash
+python -m pytest
+```
+
+Run static analysis:
+
+```bash
+python -m ruff check .
+```
+
+The test suite covers:
+
+* Temporal leakage checks
+* Prediction symmetry behavior
+* Odds matching behavior
+* Feature consistency
+* Missing-model handling
+* Frontend helper logic
+
+## Docker
+
+Build the image after downloading or training the model:
 
 ```bash
 docker build -t tennis-match-predictor .
+```
+
+Run the Streamlit application:
+
+```bash
 docker run --rm -p 8501:8501 tennis-match-predictor
 ```
 
-## Evaluation Protocol
-
-Official reports group rows by `match_id`, predict both player perspectives and
-apply the exact production formula:
+Open the application at:
 
 ```text
-P(A beats B) = (direct_P(A beats B) + 1 - direct_P(B beats A)) / 2
+http://localhost:8501
 ```
 
-| Dataset | Accuracy | ROC-AUC | Log loss | Brier | ECE |
-|---|---:|---:|---:|---:|---:|
-| Validation 2024 | 67.69% | 75.24% | 0.5850 | 0.2012 | 0.0092 |
-| Retrospective benchmark 2025 | 67.56% | 73.89% | 0.5973 | 0.2066 | 0.0186 |
+## Generated Outputs
 
-For the 2025 retrospective benchmark, the LightGBM direct-model symmetry gap is
-0.0125 mean, 0.0092 median, 0.0362 p95 and 0.1730 maximum. Full per-model and
-subgroup results are in `reports/model_metrics.csv` and
-`reports/model_metrics.json`.
-
-The 2025 data was inspected during development. It is a retrospective benchmark,
-not an untouched final test set, and is not used to select features or models.
-
-## Outputs
-
-The pipeline writes generated datasets, model artifacts, and reports to these
-locations:
+The pipeline creates:
 
 ```text
 data/processed/cleaned_matches.parquet
-data/features/match_features.parquet
-data/features/train.csv
-data/features/validation.csv
-data/features/test.csv
-data/features/advanced/match_features.parquet
 data/features/advanced/train.csv
 data/features/advanced/validation.csv
 data/features/advanced/test.csv
-models/*.pkl
 models/advanced/*.pkl
 reports/ablation_results.csv
-reports/ablation_metrics.json
 reports/model_metrics.csv
 reports/model_metrics.json
 reports/confusion_matrix.png
 reports/calibration_curve.png
 ```
 
-## Current Status
+Generated datasets and model binaries are not intended to be committed directly to the repository.
 
-The base and advanced modeling pipelines are complete. With production's
-two-perspective averaging, the saved advanced LightGBM reaches 67.56% accuracy
-and 73.89% ROC-AUC on the retrospective 2025 benchmark.
+## Limitations
 
-The 2025 data was inspected during feature development, so it is not presented as
-an untouched final test set. Ablation decisions use expanding-window validation
-over 2020–2024; a future untouched year is required for a new final test.
+* Predictions use historical data rather than live rankings or injury information.
+* Player form may become stale when the latest available match data is old.
+* Historical betting odds require approximate matching across external datasets.
+* The 2025 results are retrospective and do not represent a fully untouched final test.
+* Model probabilities are estimates, not guarantees.
+* A future season is required for a new untouched evaluation.
 
-The odds matcher uses a seven-day window, tournament validation where available,
-and auditable confidence/method fields. Surname-only matches stay below the
-model-use threshold. Matching and feature-symmetry regression tests are included;
-a statistically meaningful manual sample audit is still required before claiming
-a measured false-positive rate.
+## Roadmap
 
-For complete metrics, dataset statistics, implemented improvements, technical notes and planned work, see [the progress report](reports/progress_report.md).
+* [x] Chronological ingestion and cleaning pipeline
+* [x] Leakage-free advanced feature engineering
+* [x] Multiple model training and comparison
+* [x] Expanding-window ablation analysis
+* [x] Automated leakage and prediction tests
+* [x] CLI and Streamlit prediction interfaces
+* [ ] Complete a statistically meaningful manual odds-matching audit
+* [ ] Evaluate on a future untouched ATP season
+* [ ] Add automated live data refresh
+* [ ] Publish a hosted demonstration
+
+## Further Documentation
+
+Detailed experiment notes, dataset statistics, implementation progress, and technical decisions are available in:
+
+```text
+reports/progress_report.md
+```
+
+## License
+
+Add the repository’s actual license here. Do not claim MIT unless a matching `LICENSE` file exists.
