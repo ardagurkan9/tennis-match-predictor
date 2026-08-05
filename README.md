@@ -51,7 +51,13 @@ The interface displays:
 streamlit run app.py
 ```
 
-> Add a screenshot or short GIF of the Streamlit interface here.
+### Prediction and statistical comparison
+
+![Match prediction probabilities and key statistics](pictures/tennis-1.png)
+
+### Player profiles and recent form
+
+![Player profiles and last five matches](pictures/tennis-2.png)
 
 ## How It Works
 
